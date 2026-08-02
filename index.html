@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analizador de maullidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --base:#e7eaef;
+  --surface:#ffffff;
+  --ink:#161c26;
+  --muted:#69748a;
+  --line:#d3d9e3;
+  --trace:#8b2fa8;      /* contorno de tono */
+  --energy:#e0891e;     /* envolvente de energía */
+  --signal:#0f6f6a;     /* acciones / medidas */
+  --alert:#b5323c;
+  --display:'Space Grotesk','IBM Plex Sans',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--body);
+  background:var(--base);
+  color:var(--ink);
+  padding:18px 14px 40px;
+  line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:620px;margin:0 auto}
+header{margin-bottom:18px}
+.eyebrow{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+}
+h1{font-family:var(--display);font-size:1.9rem;line-height:1.1;letter-spacing:-.02em;font-weight:700}
+.lede{color:var(--muted);font-size:.95rem;margin-top:6px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+
+/* --- captura --- */
+.scope{position:relative;background:#161c26;border-radius:10px;overflow:hidden}
+#scope{display:block;width:100%;height:110px}
+.timer{
+  position:absolute;top:8px;right:10px;font-family:var(--mono);font-size:.78rem;
+  color:#e7eaef;background:rgba(0,0,0,.35);padding:2px 7px;border-radius:5px;
+}
+#status{font-size:.86rem;color:var(--muted);margin-top:10px;min-height:1.3em}
+.controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{
+  flex:1 1 auto;min-width:130px;padding:12px 14px;border:1px solid transparent;border-radius:9px;
+  font-family:var(--body);font-size:.95rem;font-weight:600;cursor:pointer;transition:filter .15s,opacity .15s;
+}
+.btn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.btn-rec{background:var(--signal);color:#fff}
+.btn-stop{background:var(--alert);color:#fff}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);flex:0 1 auto;min-width:0}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:not(:disabled):hover{filter:brightness(1.08)}
+.filerow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:.82rem;color:var(--muted);flex-wrap:wrap}
+input[type=file]{display:none}
+.link{color:var(--signal);text-decoration:underline;cursor:pointer;background:none;border:none;font:inherit;padding:0}
+audio{width:100%;margin-top:10px;display:none}
+
+/* --- resultado --- */
+.verdict{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.verdict h2{font-family:var(--display);font-size:1.45rem;letter-spacing:-.01em}
+.conf{font-family:var(--mono);font-size:.76rem;color:var(--muted);white-space:nowrap}
+.verdict-note{font-size:.9rem;color:var(--muted);margin-bottom:14px}
+
+.contour{position:relative;margin:14px 0 6px}
+#contour{display:block;width:100%;height:160px;background:#f4f6f9;border:1px solid var(--line);border-radius:10px}
+.legend{display:flex;gap:14px;font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.swatch{display:inline-block;width:16px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+
+.bars{margin-top:16px;display:flex;flex-direction:column;gap:7px}
+.row{display:grid;grid-template-columns:1fr 84px 46px;align-items:center;gap:8px;font-size:.92rem}
+.row .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{height:8px;background:#e7eaef;border-radius:4px;overflow:hidden}
+.fill{height:100%;background:var(--muted);border-radius:4px;transition:width .45s ease}
+.row.top .fill{background:var(--trace)}
+.row.top .name{font-weight:600}
+.pct{font-family:var(--mono);font-size:.82rem;text-align:right;color:var(--muted)}
+.row.top .pct{color:var(--ink);font-weight:500}
+
+h3.sec{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.why{list-style:none;font-size:.89rem}
+.why li{padding:5px 0 5px 16px;border-left:2px solid var(--line);margin-bottom:2px}
+.why li b{font-weight:600}
+.metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.metric{background:#f4f6f9;border-radius:8px;padding:8px 10px}
+.metric .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.metric .v{font-family:var(--mono);font-size:1rem;font-weight:500;color:var(--signal)}
+.placeholder{color:var(--muted);font-size:.9rem}
+
+/* --- entrenamiento --- */
+.teach summary{font-family:var(--display);font-size:1rem;font-weight:500;cursor:pointer}
+.teach[open] summary{margin-bottom:12px}
+.teach p{font-size:.88rem;color:var(--muted);margin-bottom:10px}
+.labels{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{
+  padding:7px 11px;border:1px solid var(--line);background:#fff;border-radius:20px;
+  font-size:.85rem;cursor:pointer;font-family:var(--body);
+}
+.chip:hover{border-color:var(--signal)}
+.chip:disabled{opacity:.4;cursor:not-allowed}
+.dataset{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-top:10px}
+.dataset b{color:var(--ink)}
+.note{font-size:.8rem;color:var(--muted);margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.warn{background:#fdf3f3;border-left:3px solid var(--alert);padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Bioacústica doméstica</p>
+  <h1>Analizador de maullidos</h1>
+  <p class="lede">Mide el tono, la duración y la textura de la vocalización, y dibuja su melodía. Después propone una interpretación —siempre con las medidas a la vista.</p>
+</header>
+
+<section class="card">
+  <div class="scope">
+    <canvas id="scope"></canvas>
+    <span class="timer" id="timer">0.0 s</span>
+  </div>
+  <p id="status">Listo para grabar.</p>
+  <div class="controls">
+    <button id="recBtn" class="btn btn-rec">Grabar</button>
+    <button id="stopBtn" class="btn btn-stop" disabled>Detener</button>
+    <button id="analyzeBtn" class="btn btn-ghost" disabled>Analizar</button>
+  </div>
+  <div class="filerow">
+    <span>o bien</span>
+    <button class="link" id="pickFile">analiza un archivo de audio</button>
+    <input type="file" id="fileInput" accept="audio/*">
+  </div>
+  <audio id="player" controls></audio>
+</section>
+
+<section class="card" id="resultCard">
+  <h3 class="sec" style="margin-top:0">Resultado</h3>
+  <p class="placeholder" id="placeholder">Graba un maullido de al menos medio segundo y pulsa Analizar.</p>
+  <div id="result" hidden></div>
+</section>
+
+<details class="card teach">
+  <summary>Enséñale a tu gato (mejora la precisión)</summary>
+  <p>La relación entre sonido y significado varía mucho de un gato a otro: lo que en uno es petición de comida, en otro es saludo. Si grabas ejemplos etiquetados de <em>tu</em> gato en situaciones que ya conoces, el análisis pasa a compararlo con ellos en vez de con reglas generales.</p>
+  <p>Analiza una grabación y luego márcala con lo que estaba pasando de verdad:</p>
+  <div class="labels" id="labelChips"></div>
+  <div class="dataset" id="datasetInfo">Sin ejemplos guardados.</div>
+  <div class="controls" style="margin-top:12px">
+    <button class="btn btn-ghost" id="exportBtn">Exportar ejemplos</button>
+    <button class="btn btn-ghost" id="importBtn">Importar ejemplos</button>
+    <button class="btn btn-ghost" id="clearBtn">Borrar todo</button>
+    <input type="file" id="importInput" accept="application/json,.json">
+  </div>
+  <p class="note">Los ejemplos viven solo en esta pestaña. Expórtalos a un archivo si quieres conservarlos.</p>
+</details>
+
+<p class="note">Las medidas acústicas son reales y reproducibles. La interpretación, no: no existe un catálogo validado que traduzca maullidos a intenciones, y los estudios disponibles (por ejemplo el proyecto Meowsic de Susanne Schötz) apuntan a que el significado es en buena medida individual y depende del contexto. Tómalo como una lectura orientativa, no como un diagnóstico. Si sospechas dolor, la referencia es el veterinario, no esta página.</p>
+
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================
+   1. ANÁLISIS DE SEÑAL
+   ========================================================== */
+const SR = 16000, FRAME = 1024, HOP = 256;
+
+function toMono(audioBuffer){
+  const n = audioBuffer.numberOfChannels, len = audioBuffer.length;
+  const out = new Float32Array(len);
+  for(let c=0;c<n;c++){
+    const d = audioBuffer.getChannelData(c);
+    for(let i=0;i<len;i++) out[i] += d[i]/n;
+  }
+  return out;
+}
+
+function resample(data, srIn, srOut){
+  if(srIn === srOut) return Float32Array.from(data);
+  const ratio = srIn/srOut;
+  let src = data;
+  if(ratio > 1){                                  // antialias básico antes de diezmar
+    const win = Math.max(1, Math.round(ratio));
+    const sm = new Float32Array(data.length);
+    let acc = 0;
+    for(let i=0;i<data.length;i++){
+      acc += data[i];
+      if(i >= win) acc -= data[i-win];
+      sm[i] = acc/Math.min(i+1, win);
+    }
+    src = sm;
+  }
+  const outLen = Math.floor(data.length/ratio);
+  const out = new Float32Array(outLen);
+  for(let i=0;i<outLen;i++){
+    const pos = i*ratio, i0 = Math.floor(pos), i1 = Math.min(i0+1, src.length-1), f = pos-i0;
+    out[i] = src[i0]*(1-f) + src[i1]*f;
+  }
+  return out;
+}
+
+function fft(re, im){
+  const n = re.length;
+  for(let i=1, j=0; i<n; i++){
+    let bit = n>>1;
+    for(; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if(i < j){ let t=re[i]; re[i]=re[j]; re[j]=t; t=im[i]; im[i]=im[j]; im[j]=t; }
+  }
+  for(let len=2; len<=n; len<<=1){
+    const ang = -2*Math.PI/len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for(let i=0;i<n;i+=len){
+      let cr=1, ci=0;
+      for(let k=0;k<len/2;k++){
+        const ur=re[i+k], ui=im[i+k];
+        const vr=re[i+k+len/2]*cr - im[i+k+len/2]*ci;
+        const vi=re[i+k+len/2]*ci + im[i+k+len/2]*cr;
+        re[i+k]=ur+vr; im[i+k]=ui+vi;
+        re[i+k+len/2]=ur-vr; im[i+k+len/2]=ui-vi;
+        const ncr = cr*wr - ci*wi; ci = cr*wi + ci*wr; cr = ncr;
+      }
+    }
+  }
+}
+
+/* Tono por autocorrelación normalizada + interpolación parabólica.
+   Devuelve también la "claridad" (0-1): cuán periódica es la trama. */
+function detectPitch(frame, sr, fMin, fMax){
+  const n = frame.length;
+  const maxLag = Math.min(n-1, Math.floor(sr/fMin));
+  const minLag = Math.max(2, Math.floor(sr/fMax));
+  let e0 = 0;
+  for(let i=0;i<n;i++) e0 += frame[i]*frame[i];
+  if(e0 < 1e-9) return {f0:0, clarity:0};
+  const rs = new Float32Array(maxLag+1);
+  for(let lag=minLag; lag<=maxLag; lag++){
+    let corr=0, e1=0, e2=0;
+    for(let i=0;i<n-lag;i++){
+      corr += frame[i]*frame[i+lag];
+      e1 += frame[i]*frame[i];
+      e2 += frame[i+lag]*frame[i+lag];
+    }
+    rs[lag] = corr/(Math.sqrt(e1*e2) || 1e-9);
+  }
+  let best=-1, bestR=0;
+  for(let lag=minLag; lag<=maxLag; lag++) if(rs[lag]>bestR){ bestR=rs[lag]; best=lag; }
+  let peak=-1;                                     // primer pico: evita saltos de octava
+  for(let lag=minLag+1; lag<maxLag; lag++){
+    if(rs[lag]>rs[lag-1] && rs[lag]>=rs[lag+1] && rs[lag]>0.35){ peak=lag; break; }
+  }
+  if(peak>0 && rs[peak] > bestR*0.85) best = peak;
+  if(best < 0) return {f0:0, clarity:0};
+  const clarity = rs[best];
+  let lagRef = best;
+  if(best>minLag && best<maxLag){
+    const a=rs[best-1], b=rs[best], c=rs[best+1], den=a-2*b+c;
+    if(Math.abs(den)>1e-12) lagRef = best + 0.5*(a-c)/den;
+  }
+  return {f0: sr/lagRef, clarity};
+}
+
+const hannWin = (()=>{ const w=new Float32Array(FRAME);
+  for(let i=0;i<FRAME;i++) w[i]=0.5-0.5*Math.cos(2*Math.PI*i/(FRAME-1)); return w; })();
+const st = (a,b) => (a>0 && b>0) ? 12*Math.log2(a/b) : 0;
+function median(a){ if(!a.length) return 0; const s=Float64Array.from(a).sort(); const m=s.length>>1;
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+
+function analyzeSignal(mono, sampleRate){
+  const x = resample(mono, sampleRate, SR);
+  let peak = 0;
+  for(let i=0;i<x.length;i++) peak = Math.max(peak, Math.abs(x[i]));
+  if(peak < 1e-5 || x.length < FRAME) return null;
+  const norm = new Float32Array(x.length);
+  for(let i=0;i<x.length;i++) norm[i] = x[i]/peak;
+
+  const frames = [];
+  for(let start=0; start+FRAME<=norm.length; start+=HOP){
+    const seg = norm.subarray(start, start+FRAME);
+    let rms=0, zc=0;
+    for(let i=0;i<FRAME;i++){
+      rms += seg[i]*seg[i];
+      if(i>0 && ((seg[i-1]<0 && seg[i]>=0) || (seg[i-1]>=0 && seg[i]<0))) zc++;
+    }
+    rms = Math.sqrt(rms/FRAME);
+    const zcr = zc*SR/FRAME/2;
+
+    const re = new Float64Array(FRAME), im = new Float64Array(FRAME);
+    for(let i=0;i<FRAME;i++) re[i] = seg[i]*hannWin[i];
+    fft(re, im);
+    const half = FRAME/2, mags = new Float64Array(half);
+    let sumMag=0, sumFMag=0;
+    for(let k=0;k<half;k++){
+      const m = Math.hypot(re[k], im[k]);
+      mags[k]=m; sumMag+=m; sumFMag += (k*SR/FRAME)*m;
+    }
+    const centroid = sumMag>1e-9 ? sumFMag/sumMag : 0;
+    let acc=0, rolloff=0;
+    for(let k=0;k<half;k++){ acc+=mags[k]; if(acc >= 0.85*sumMag){ rolloff = k*SR/FRAME; break; } }
+    let logSum=0, linSum=0, cnt=0;
+    for(let k=1;k<half;k++){ const m=mags[k]+1e-10; logSum+=Math.log(m); linSum+=m; cnt++; }
+    const flatness = Math.exp(logSum/cnt)/((linSum/cnt) || 1e-10);
+
+    const p = detectPitch(seg, SR, 180, 2000);
+    frames.push({t:start/SR, rms, zcr, centroid, rolloff, flatness, f0:p.f0, clarity:p.clarity});
+  }
+  if(!frames.length) return null;
+
+  const rmsArr = frames.map(f=>f.rms);
+  const maxRms = Math.max(...rmsArr);
+  const smooth = rmsArr.map((_,i)=>{
+    let s=0,c=0;
+    for(let j=Math.max(0,i-2); j<=Math.min(rmsArr.length-1,i+2); j++){ s+=rmsArr[j]; c++; }
+    return s/c;
+  });
+  const sortedRms = Float64Array.from(smooth).sort();
+  const noiseFloor = sortedRms[Math.floor(sortedRms.length*0.05)];
+  // el ruido de fondo puede subir el umbral, pero nunca por encima del 25% del pico:
+  // si no, en grabaciones sin silencio inicial se recortaría la propia vocalización
+  const thr = Math.max(Math.min(noiseFloor*3, maxRms*0.25), maxRms*0.08, 0.008);
+
+  const raw = [];
+  let cur = null;
+  for(let i=0;i<smooth.length;i++){
+    if(smooth[i] >= thr){ if(!cur) cur={s:i,e:i}; else cur.e=i; }
+    else if(cur){ raw.push(cur); cur=null; }
+  }
+  if(cur) raw.push(cur);
+  const minLen = Math.round(0.06/(HOP/SR)), gapMerge = Math.round(0.09/(HOP/SR));
+  const merged = [];
+  for(const s of raw){
+    const last = merged[merged.length-1];
+    if(last && s.s-last.e <= gapMerge) last.e = s.e; else merged.push({s:s.s, e:s.e});
+  }
+  const syl = merged.filter(s => s.e-s.s >= minLen);
+
+  const active = syl.length ? frames.slice(syl[0].s, syl[syl.length-1].e+1) : frames;
+  const voiced = active.filter(f => f.clarity>0.55 && f.rms>thr*0.8 && f.f0>0);
+
+  const f0s = voiced.map(f=>f.f0);
+  const f0Median = median(f0s);
+  const fs = Float64Array.from(f0s).sort();
+  const f0Low = fs.length ? fs[Math.floor(fs.length*0.1)] : 0;
+  const f0High = fs.length ? fs[Math.floor(fs.length*0.9)] : 0;
+
+  let slope = 0;
+  if(voiced.length >= 4){
+    const ts = voiced.map(f=>f.t), ys = voiced.map(f=>st(f.f0, f0Median||1));
+    const mt = ts.reduce((a,b)=>a+b,0)/ts.length, my = ys.reduce((a,b)=>a+b,0)/ys.length;
+    let num=0, den=0;
+    for(let i=0;i<ts.length;i++){ num += (ts[i]-mt)*(ys[i]-my); den += (ts[i]-mt)**2; }
+    slope = den>1e-9 ? num/den : 0;
+  }
+  let endShift = 0;
+  if(voiced.length >= 6){
+    const q = Math.max(2, Math.floor(voiced.length*0.3));
+    endShift = st(median(voiced.slice(-q).map(f=>f.f0)), median(voiced.slice(0,q).map(f=>f.f0)));
+  }
+  let jitter=0, jn=0;
+  for(let i=1;i<voiced.length;i++){
+    if(voiced[i].t - voiced[i-1].t < 0.03){
+      jitter += Math.abs(voiced[i].f0-voiced[i-1].f0)/((voiced[i].f0+voiced[i-1].f0)/2);
+      jn++;
+    }
+  }
+  jitter = jn ? jitter/jn : 0;
+
+  const totalRms = active.reduce((a,f)=>a+f.rms,0) || 1;
+  return {
+    durationTotal: active.length ? active[active.length-1].t - active[0].t + FRAME/SR : 0,
+    voicedDuration: voiced.length*(HOP/SR),
+    voicedRatio: active.length ? voiced.length/active.length : 0,
+    syllables: Math.max(syl.length, voiced.length ? 1 : 0),
+    f0Median, f0Low, f0High,
+    f0RangeSemitones: f0Low>0 ? st(f0High, f0Low) : 0,
+    slopeSemitonesPerSec: slope,
+    endShiftSemitones: endShift,
+    jitter,
+    harmonicity: active.length ? active.reduce((a,f)=>a+f.clarity,0)/active.length : 0,
+    centroid: active.reduce((a,f)=>a+f.centroid*f.rms,0)/totalRms,
+    flatness: active.length ? active.reduce((a,f)=>a+f.flatness,0)/active.length : 1,
+    zcr: active.reduce((a,f)=>a+f.zcr*f.rms,0)/totalRms,
+    peakLevelDb: 20*Math.log10(peak),
+    contour: voiced.map(f=>({t:f.t, f0:f.f0})),
+    envelope: smooth.map((v,i)=>({t:frames[i].t, v:v/(maxRms||1)})),
+    tStart: active.length ? active[0].t : 0,
+    tEnd: active.length ? active[active.length-1].t + FRAME/SR : 0
+  };
+}
+
+/* ==========================================================
+   2. INTERPRETACIÓN (reglas transparentes)
+   ========================================================== */
+const CATS = {
+  comida:  {label:'Pide algo (comida, atención)', emoji:'🍽️'},
+  saludo:  {label:'Saludo o reconocimiento',      emoji:'👋'},
+  juego:   {label:'Excitación o ganas de jugar',  emoji:'🎾'},
+  estres:  {label:'Molestia o incomodidad',       emoji:'😾'},
+  dolor:   {label:'Malestar intenso o dolor',     emoji:'🩺'}
+};
+
+const RULES = [
+  {test:f=>f.durationTotal<0.5 && f.harmonicity>0.55,
+   add:{saludo:35, juego:12}, why:f=>`Vocalización muy breve (${f.durationTotal.toFixed(2)} s): más propia de un saludo que de una petición.`},
+  {test:f=>f.syllables>=3,
+   add:{comida:32, juego:14}, why:f=>`Llamada repetida (${f.syllables} sílabas): la insistencia suele acompañar a una petición.`},
+  {test:f=>f.syllables===2,
+   add:{comida:14, saludo:8}, why:()=>`Dos sílabas encadenadas: patrón habitual del maullido dirigido a personas.`},
+  {test:f=>f.slopeSemitonesPerSec>3,
+   add:{comida:24, juego:8}, why:f=>`Tono ascendente (+${f.slopeSemitonesPerSec.toFixed(1)} semitonos/s): en gatos domésticos se asocia a llamadas de solicitud.`},
+  {test:f=>f.endShiftSemitones>2,
+   add:{comida:14, saludo:8}, why:f=>`Acaba ${f.endShiftSemitones.toFixed(1)} semitonos más agudo de lo que empieza.`},
+  {test:f=>f.slopeSemitonesPerSec<-3,
+   add:{estres:20, dolor:10}, why:f=>`Tono descendente (${f.slopeSemitonesPerSec.toFixed(1)} semitonos/s): más frecuente en llamadas de queja.`},
+  {test:f=>f.durationTotal>1.3 && f.f0Median>=450,
+   add:{comida:18, dolor:10}, why:f=>`Llamada larga y aguda (${f.durationTotal.toFixed(2)} s a ${Math.round(f.f0Median)} Hz).`},
+  {test:f=>f.durationTotal>1.3 && f.f0Median>0 && f.f0Median<450,
+   add:{estres:26, dolor:18}, why:f=>`Llamada larga y grave (${Math.round(f.f0Median)} Hz): timbre de protesta más que de petición.`},
+  {test:f=>f.jitter>0.06,
+   add:{dolor:24, estres:14}, why:f=>`Tono inestable (jitter ${(f.jitter*100).toFixed(1)}%): la voz "tiembla", señal de tensión.`},
+  {test:f=>f.harmonicity<0.45 && f.flatness>0.25,
+   add:{estres:34, dolor:14}, why:()=>`Sonido poco tonal y con mucho ruido: se parece más a un bufido o gruñido que a un maullido.`},
+  {test:f=>f.f0RangeSemitones>8,
+   add:{dolor:14, comida:10}, why:f=>`Melodía muy modulada (${f.f0RangeSemitones.toFixed(1)} semitonos de recorrido).`},
+  {test:f=>f.centroid>2200 && f.durationTotal<0.7,
+   add:{juego:22}, why:f=>`Chirrido breve y brillante (centroide ${Math.round(f.centroid)} Hz): típico de excitación, caza o juego.`},
+  {test:f=>f.f0Median>700 && f.durationTotal<1,
+   add:{saludo:14, juego:14}, why:f=>`Sonido agudo y corto (${Math.round(f.f0Median)} Hz).`},
+  {test:f=>f.durationTotal>=0.5 && f.durationTotal<=1.3 && f.f0Median>=400 && f.f0Median<=750 && Math.abs(f.slopeSemitonesPerSec)<=3,
+   add:{comida:16, saludo:10}, why:()=>`Maullido de duración y tono medios, con melodía estable: el patrón más común del "miau" dirigido a personas.`},
+  {test:f=>f.peakLevelDb>-6 && f.durationTotal>1,
+   add:{dolor:12, comida:10}, why:()=>`Emisión muy intensa y sostenida.`}
+];
+
+function classify(f){
+  const scores = {comida:6, saludo:6, juego:6, estres:6, dolor:6};
+  const reasons = [];
+  for(const r of RULES){
+    let ok = false;
+    try{ ok = r.test(f); }catch(e){ ok = false; }
+    if(!ok) continue;
+    for(const k in r.add) scores[k] += r.add[k];
+    reasons.push(r.why(f));
+  }
+  const total = Object.values(scores).reduce((a,b)=>a+b,0);
+  const pct = {};
+  for(const k in scores) pct[k] = (scores[k]/total)*100;
+  return {pct, reasons};
+}
+
+function roundTo100(pct){
+  const entries = Object.entries(pct).map(([k,v])=>[k, Math.floor(v)]);
+  let rest = 100 - entries.reduce((a,[,v])=>a+v,0);
+  const frac = Object.entries(pct).map(([k,v])=>[k, v-Math.floor(v)]).sort((a,b)=>b[1]-a[1]);
+  const map = Object.fromEntries(entries);
+  for(let i=0; i<frac.length && rest>0; i++, rest--) map[frac[i][0]]++;
+  return map;
+}
+
+/* Calidad de la señal: si es mala, se avisa en vez de fingir precisión */
+function signalQuality(f){
+  const problems = [];
+  if(f.peakLevelDb < -35) problems.push('la grabación está muy floja: acerca el micro');
+  if(f.durationTotal < 0.2) problems.push('el sonido detectado dura muy poco');
+  if(f.voicedRatio < 0.2) problems.push('apenas se detecta tono definido; puede ser ruido, un bufido o un ronroneo');
+  if(f.flatness > 0.45) problems.push('hay mucho ruido de fondo');
+  let q = 1;
+  q -= problems.length*0.25;
+  q = Math.max(0.1, Math.min(1, q));
+  return {q, problems};
+}
+
+/* ==========================================================
+   3. MODELO PERSONAL (k-NN sobre ejemplos etiquetados)
+   ========================================================== */
+const FEATS = f => [
+  Math.log(Math.max(f.f0Median, 50)),
+  Math.log(Math.max(f.durationTotal, 0.05)),
+  Math.min(f.syllables, 6),
+  f.slopeSemitonesPerSec,
+  f.endShiftSemitones,
+  f.f0RangeSemitones,
+  f.harmonicity,
+  Math.log(Math.max(f.centroid, 50)),
+  f.jitter*100,
+  f.flatness
+];
+let dataset = [];   // {label, vec}
+
+function knn(f){
+  const labels = [...new Set(dataset.map(d=>d.label))];
+  if(dataset.length < 6 || labels.length < 2) return null;
+  const dim = FEATS(f).length;
+  const mean = new Array(dim).fill(0), sd = new Array(dim).fill(0);
+  for(const d of dataset) for(let i=0;i<dim;i++) mean[i]+=d.vec[i]/dataset.length;
+  for(const d of dataset) for(let i=0;i<dim;i++) sd[i]+=(d.vec[i]-mean[i])**2/dataset.length;
+  for(let i=0;i<dim;i++) sd[i] = Math.sqrt(sd[i]) || 1;
+  const z = v => v.map((x,i)=>(x-mean[i])/sd[i]);
+  const q = z(FEATS(f));
+  const dists = dataset.map(d=>{
+    const p = z(d.vec);
+    let s=0; for(let i=0;i<dim;i++) s += (p[i]-q[i])**2;
+    return {label:d.label, dist:Math.sqrt(s)};
+  }).sort((a,b)=>a.dist-b.dist);
+  const k = Math.min(3, dists.length);
+  const votes = {};
+  for(const c in CATS) votes[c] = 0.5;
+  for(let i=0;i<k;i++) votes[dists[i].label] = (votes[dists[i].label]||0) + 1/(1+dists[i].dist);
+  const total = Object.values(votes).reduce((a,b)=>a+b,0);
+  const pct = {};
+  for(const c in votes) pct[c] = votes[c]/total*100;
+  return {pct, nearest:dists[0], n:dataset.length};
+}
+
+/* ==========================================================
+   4. INTERFAZ
+   ========================================================== */
+const $ = id => document.getElementById(id);
+const recBtn=$('recBtn'), stopBtn=$('stopBtn'), analyzeBtn=$('analyzeBtn');
+const statusEl=$('status'), timerEl=$('timer'), player=$('player');
+const scope=$('scope'), sctx=scope.getContext('2d');
+const resultEl=$('result'), placeholderEl=$('placeholder');
+
+let mediaRecorder=null, chunks=[], stream=null, audioCtx=null, analyser=null, srcNode=null;
+let rafId=null, recStart=0, recBlob=null, autoStop=null, lastFeatures=null;
+
+function fitCanvas(cv){
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if(cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)){
+    cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+    cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+  }
+  return {w, h};
+}
+function clearScope(msg){
+  const {w,h} = fitCanvas(scope);
+  sctx.clearRect(0,0,w,h);
+  sctx.fillStyle = '#161c26'; sctx.fillRect(0,0,w,h);
+  sctx.strokeStyle = 'rgba(231,234,239,.25)';
+  sctx.beginPath(); sctx.moveTo(0,h/2); sctx.lineTo(w,h/2); sctx.stroke();
+  if(msg){
+    sctx.fillStyle = 'rgba(231,234,239,.5)';
+    sctx.font = '12px ui-monospace, monospace';
+    sctx.textAlign = 'center';
+    sctx.fillText(msg, w/2, h/2 - 10);
+  }
+}
+
+function drawScope(){
+  const buf = new Uint8Array(analyser.fftSize);
+  const draw = () => {
+    rafId = requestAnimationFrame(draw);
+    analyser.getByteTimeDomainData(buf);
+    const {w,h} = fitCanvas(scope);
+    sctx.fillStyle = '#161c26'; sctx.fillRect(0,0,w,h);
+    sctx.lineWidth = 2; sctx.strokeStyle = '#e0891e';
+    sctx.beginPath();
+    for(let i=0;i<buf.length;i++){
+      const x = (i/buf.length)*w;
+      const y = h/2 + ((buf[i]-128)/128)*(h/2-6);
+      i ? sctx.lineTo(x,y) : sctx.moveTo(x,y);
+    }
+    sctx.stroke();
+    const el = (performance.now()-recStart)/1000;
+    timerEl.textContent = el.toFixed(1)+' s';
+  };
+  draw();
+}
+
+async function startRecording(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+  }catch(e){
+    statusEl.textContent = 'No se pudo acceder al micrófono. Revisa los permisos del navegador y vuelve a intentarlo.';
+    return;
+  }
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  audioCtx = new Ctx();
+  if(audioCtx.state === 'suspended') await audioCtx.resume();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  srcNode = audioCtx.createMediaStreamSource(stream);
+  srcNode.connect(analyser);
+
+  const types = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
+  const mime = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+  chunks = [];
+  mediaRecorder = mime ? new MediaRecorder(stream, {mimeType:mime}) : new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    recBlob = new Blob(chunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+    player.src = URL.createObjectURL(recBlob);
+    player.style.display = 'block';
+    stopBtn.disabled = true; recBtn.disabled = false; analyzeBtn.disabled = false;
+    statusEl.textContent = 'Grabación lista. Pulsa Analizar.';
+    cleanupAudio();
+  };
+  mediaRecorder.start();
+  recStart = performance.now();
+  recBtn.disabled = true; stopBtn.disabled = false; analyzeBtn.disabled = true;
+  statusEl.textContent = 'Grabando… detén cuando el maullido haya terminado.';
+  drawScope();
+  autoStop = setTimeout(()=>{ if(mediaRecorder && mediaRecorder.state === 'recording') stopRecording(); }, 15000);
+}
+
+function cleanupAudio(){
+  if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+  if(autoStop){ clearTimeout(autoStop); autoStop = null; }
+  if(srcNode){ try{ srcNode.disconnect(); }catch(e){} srcNode = null; }
+  if(audioCtx){ try{ audioCtx.close(); }catch(e){} audioCtx = null; }
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  analyser = null;
+  clearScope('');
+}
+
+function stopRecording(){
+  if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+}
+
+function decode(arrayBuffer){
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new Ctx();
+  return new Promise((resolve, reject)=>{
+    const p = ctx.decodeAudioData(arrayBuffer, b=>resolve({buf:b, ctx}), e=>reject(e));
+    if(p && p.then) p.then(b=>resolve({buf:b, ctx})).catch(reject);
+  });
+}
+
+async function analyzeBlob(blob){
+  statusEl.textContent = 'Analizando…';
+  analyzeBtn.disabled = true;
+  try{
+    const ab = await blob.arrayBuffer();
+    const {buf, ctx} = await decode(ab);
+    const mono = toMono(buf);
+    const f = analyzeSignal(mono, buf.sampleRate);
+    try{ ctx.close(); }catch(e){}
+    if(!f){
+      statusEl.textContent = 'No se detectó sonido suficiente. Graba más cerca del gato.';
+      analyzeBtn.disabled = false;
+      return;
+    }
+    lastFeatures = f;
+    render(f);
+    statusEl.textContent = 'Análisis completado.';
+  }catch(e){
+    statusEl.textContent = 'No se pudo decodificar el audio. Prueba con otro formato o vuelve a grabar.';
+  }
+  analyzeBtn.disabled = false;
+  updateChips();
+}
+
+function drawContour(f){
+  const cv = $('contour');
+  const {w,h} = fitCanvas(cv);
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const padL=40, padR=10, padT=12, padB=22;
+  const t0 = f.tStart, t1 = Math.max(f.tEnd, t0+0.2);
+  const X = t => padL + ((t-t0)/(t1-t0))*(w-padL-padR);
+  const fmin=180, fmax=1800;
+  const Y = hz => padT + (1 - (Math.log(hz/fmin)/Math.log(fmax/fmin)))*(h-padT-padB);
+
+  ctx.font = '10px ui-monospace, monospace';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for(const hz of [200,400,800,1600]){
+    const y = Y(hz);
+    ctx.strokeStyle = '#dde2ea'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(w-padR,y); ctx.stroke();
+    ctx.fillStyle = '#69748a'; ctx.fillText(hz+' Hz', padL-6, y);
+  }
+
+  // envolvente de energía (fondo)
+  ctx.fillStyle = 'rgba(224,137,30,.18)';
+  ctx.beginPath();
+  ctx.moveTo(X(t0), h-padB);
+  for(const p of f.envelope){
+    if(p.t < t0-0.05 || p.t > t1+0.05) continue;
+    ctx.lineTo(X(p.t), h-padB - p.v*(h-padT-padB)*0.9);
+  }
+  ctx.lineTo(X(t1), h-padB); ctx.closePath(); ctx.fill();
+
+  // contorno de tono
+  ctx.strokeStyle = '#8b2fa8'; ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  let pen = false, prevT = 0;
+  ctx.beginPath();
+  for(const p of f.contour){
+    const gap = p.t - prevT > 0.08;
+    if(!pen || gap){ ctx.moveTo(X(p.t), Y(p.f0)); pen = true; }
+    else ctx.lineTo(X(p.t), Y(p.f0));
+    prevT = p.t;
+  }
+  ctx.stroke();
+
+  ctx.textAlign = 'left'; ctx.fillStyle = '#69748a';
+  ctx.fillText('0 s', padL, h-8);
+  ctx.textAlign = 'right';
+  ctx.fillText((t1-t0).toFixed(2)+' s', w-padR, h-8);
+
+  if(!f.contour.length){
+    ctx.textAlign = 'center'; ctx.fillStyle = '#b5323c';
+    ctx.fillText('Sin tono definido: el sonido no es armónico', w/2, h/2);
+  }
+}
+
+function render(f){
+  const heur = classify(f);
+  const personal = knn(f);
+  const qual = signalQuality(f);
+
+  let pct, mode;
+  if(personal){
+    pct = {}; // 65% modelo personal, 35% reglas generales
+    for(const k in heur.pct) pct[k] = 0.65*(personal.pct[k]||0) + 0.35*heur.pct[k];
+    mode = `modelo personal (${personal.n} ejemplos) + reglas`;
+  }else{
+    pct = heur.pct;
+    mode = 'reglas generales';
+  }
+  const rounded = roundTo100(pct);
+  const sorted = Object.entries(rounded).sort((a,b)=>b[1]-a[1]);
+  const [topKey, topVal] = sorted[0];
+  const margin = topVal - sorted[1][1];
+  const conf = Math.round(Math.min(95, Math.max(15, (35 + margin*1.6) * qual.q)));
+
+  const warn = qual.problems.length
+    ? `<div class="warn"><b>Ojo con la grabación:</b> ${qual.problems.join('; ')}.</div>` : '';
+
+  const rows = sorted.map(([k,v],i)=>`
+    <div class="row ${i===0?'top':''}">
+      <span class="name">${CATS[k].emoji} ${CATS[k].label}</span>
+      <span class="track"><span class="fill" style="width:${v}%"></span></span>
+      <span class="pct">${v}%</span>
+    </div>`).join('');
+
+  const why = heur.reasons.length
+    ? heur.reasons.map(r=>`<li>${r}</li>`).join('')
+    : '<li>Ninguna de las pautas acústicas conocidas encaja con claridad. Es una vocalización atípica o la grabación no da suficiente detalle.</li>';
+
+  const m = (k,v) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const metrics = [
+    m('Duración', f.durationTotal.toFixed(2)+' s'),
+    m('Sílabas', f.syllables),
+    m('Tono medio', f.f0Median ? Math.round(f.f0Median)+' Hz' : '—'),
+    m('Recorrido', f.f0RangeSemitones.toFixed(1)+' st'),
+    m('Pendiente', (f.slopeSemitonesPerSec>0?'+':'')+f.slopeSemitonesPerSec.toFixed(1)+' st/s'),
+    m('Armonicidad', f.harmonicity.toFixed(2)),
+    m('Inestabilidad', (f.jitter*100).toFixed(1)+' %'),
+    m('Brillo', Math.round(f.centroid)+' Hz'),
+    m('Nivel pico', f.peakLevelDb.toFixed(1)+' dB')
+  ].join('');
+
+  const personalNote = personal
+    ? `<p class="note" style="border:0;padding:0;margin-top:10px">El ejemplo más parecido de tu colección estaba etiquetado como <b>${CATS[personal.nearest.label].label.toLowerCase()}</b>.</p>`
+    : '';
+
+  resultEl.innerHTML = `
+    ${warn}
+    <div class="verdict">
+      <h2>${CATS[topKey].emoji} ${CATS[topKey].label}</h2>
+      <span class="conf">confianza ${conf}% · ${mode}</span>
+    </div>
+    <p class="verdict-note">Es la hipótesis que mejor encaja con lo medido, no una certeza.</p>
+
+    <div class="contour"><canvas id="contour"></canvas></div>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--trace)"></span>tono (F0)</span>
+      <span><span class="swatch" style="background:rgba(224,137,30,.55)"></span>energía</span>
+    </div>
+
+    <div class="bars">${rows}</div>
+
+    <h3 class="sec">Por qué</h3>
+    <ul class="why">${why}</ul>
+    ${personalNote}
+
+    <h3 class="sec">Lo que se ha medido</h3>
+    <div class="metrics">${metrics}</div>`;
+
+  placeholderEl.hidden = true;
+  resultEl.hidden = false;
+  drawContour(f);
+  $('resultCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/* --- entrenamiento --- */
+function updateChips(){
+  const box = $('labelChips');
+  box.innerHTML = Object.entries(CATS).map(([k,v])=>
+    `<button class="chip" data-label="${k}" ${lastFeatures?'':'disabled'}>${v.emoji} ${v.label}</button>`).join('');
+  box.querySelectorAll('.chip').forEach(b=>b.addEventListener('click', ()=>{
+    if(!lastFeatures) return;
+    dataset.push({label:b.dataset.label, vec:FEATS(lastFeatures)});
+    updateDataset();
+    render(lastFeatures);
+  }));
+  updateDataset();
+}
+function updateDataset(){
+  const info = $('datasetInfo');
+  if(!dataset.length){ info.textContent = 'Sin ejemplos guardados.'; return; }
+  const counts = {};
+  for(const d of dataset) counts[d.label] = (counts[d.label]||0)+1;
+  const parts = Object.entries(counts).map(([k,v])=>`${CATS[k].label.split(' ')[0].toLowerCase()}: ${v}`);
+  const labels = Object.keys(counts).length;
+  const active = dataset.length>=6 && labels>=2;
+  info.innerHTML = `<b>${dataset.length} ejemplos</b> (${parts.join(' · ')}). ` +
+    (active ? 'El modelo personal está activo.' : `Faltan ${Math.max(0,6-dataset.length)} ejemplos y ${Math.max(0,2-labels)} etiquetas distintas para activarlo.`);
+}
+
+$('exportBtn').addEventListener('click', ()=>{
+  if(!dataset.length){ alert('Todavía no hay ejemplos que exportar.'); return; }
+  const blob = new Blob([JSON.stringify({version:1, dataset}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'maullidos-ejemplos.json';
+  a.click();
+});
+$('importBtn').addEventListener('click', ()=>$('importInput').click());
+$('importInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const data = JSON.parse(await file.text());
+    if(!Array.isArray(data.dataset)) throw new Error('formato');
+    dataset = dataset.concat(data.dataset.filter(d=>CATS[d.label] && Array.isArray(d.vec)));
+    updateDataset();
+    if(lastFeatures) render(lastFeatures);
+  }catch(err){ alert('Ese archivo no tiene el formato esperado.'); }
+  e.target.value = '';
+});
+$('clearBtn').addEventListener('click', ()=>{
+  if(dataset.length && confirm('¿Borrar los ' + dataset.length + ' ejemplos guardados?')){
+    dataset = []; updateDataset();
+    if(lastFeatures) render(lastFeatures);
+  }
+});
+
+/* --- arranque --- */
+recBtn.addEventListener('click', startRecording);
+stopBtn.addEventListener('click', stopRecording);
+analyzeBtn.addEventListener('click', ()=>{ if(recBlob) analyzeBlob(recBlob); });
+$('pickFile').addEventListener('click', ()=>$('fileInput').click());
+$('fileInput').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  recBlob = file;
+  player.src = URL.createObjectURL(file);
+  player.style.display = 'block';
+  statusEl.textContent = 'Archivo cargado: ' + file.name;
+  analyzeBlob(file);
+  e.target.value = '';
+});
+window.addEventListener('resize', ()=>{
+  if(!rafId) clearScope('');
+  if(lastFeatures && !resultEl.hidden) drawContour(lastFeatures);
+});
+
+if(!navigator.mediaDevices || !window.MediaRecorder){
+  recBtn.disabled = true;
+  statusEl.textContent = 'Este navegador no permite grabar. Puedes analizar un archivo de audio.';
+}
+clearScope('la onda aparecerá aquí');
+updateChips();
+</script>
+</body>
+</html>
