@@ -10,6 +10,12 @@
 <title>Analizador de maullidos: qué te dice tu gato | Análisis acústico gratis</title>
 <meta name="description" content="Graba el maullido de tu gato y analiza su tono, duración y melodía en el navegador. Herramienta gratuita de bioacústica felina para entender qué pide, cuándo juega y cuándo conviene ir al veterinario.">
 <link rel="canonical" href="https://nomeacuerdo1978.github.io/maullidos/">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Maullidos">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta name="theme-color" content="#0f6f6a">
 <meta name="author" content="Tu nombre">
@@ -205,6 +211,20 @@ h3.sec{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transfo
 .chip:disabled{opacity:.4;cursor:not-allowed}
 .dataset{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-top:10px}
 .dataset b{color:var(--ink)}
+.hint{font-size:.85rem;color:var(--muted);margin-bottom:12px}
+.profile-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid var(--line);
+  border-radius:8px;background:#fff;color:var(--ink);min-width:150px;cursor:pointer}
+.hist-filter{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.hist-item{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.hist-item:first-child{border-top:none}
+.hist-main{flex:1;min-width:0}
+.hist-label{font-family:var(--display);font-size:.94rem;font-weight:500}
+.hist-meta{font-family:var(--mono);font-size:.74rem;color:var(--muted);margin-top:3px}
+.hist-btn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;
+  font-size:.78rem;cursor:pointer;font-family:var(--body);color:var(--muted)}
+.hist-btn:hover{border-color:var(--signal);color:var(--ink)}
+.hist-empty{font-size:.86rem;color:var(--muted)}
 .note{font-size:.8rem;color:var(--muted);margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
 /* contenido editorial */
 .prose{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
@@ -250,6 +270,18 @@ h3.sec{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transfo
   <div id="result" hidden></div>
 </section>
 
+<section class="card" id="profileCard">
+  <h3 class="sec" style="margin-top:0">Perfil de tu gato</h3>
+  <p class="hint">Los perfiles y sus grabaciones se guardan en este dispositivo. No se sube nada a ningún servidor.</p>
+  <div class="profile-row">
+    <select id="catSelect" aria-label="Gato activo"></select>
+    <button class="btn btn-ghost" id="newCatBtn">Nuevo gato</button>
+    <button class="btn btn-ghost" id="renameCatBtn">Renombrar</button>
+    <button class="btn btn-ghost" id="deleteCatBtn">Eliminar</button>
+  </div>
+  <div class="dataset" id="storageInfo"></div>
+</section>
+
 <details class="card teach">
   <summary>Enséñale a tu gato (mejora la precisión)</summary>
   <p>La relación entre sonido y significado varía mucho de un gato a otro: lo que en uno es petición de comida, en otro es saludo. Si grabas ejemplos etiquetados de <em>tu</em> gato en situaciones que ya conoces, el análisis pasa a compararlo con ellos en vez de con reglas generales.</p>
@@ -262,8 +294,17 @@ h3.sec{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transfo
     <button class="btn btn-ghost" id="clearBtn">Borrar todo</button>
     <input type="file" id="importInput" accept="application/json,.json">
   </div>
-  <p class="note">Los ejemplos viven solo en esta pestaña. Expórtalos a un archivo si quieres conservarlos.</p>
+  <p class="note">Se guardan en este navegador junto con el audio, y siguen ahí la próxima vez que abras la página. Si borras los datos del sitio, desaparecen: exporta una copia de seguridad de vez en cuando.</p>
 </details>
+
+<section class="card" id="historyCard">
+  <h3 class="sec" style="margin-top:0">Historial de <span id="histCatName">tu gato</span></h3>
+  <div class="hist-filter">
+    <label class="hint" style="margin:0" for="histFilter">Filtrar:</label>
+    <select id="histFilter"><option value="">Todas las etiquetas</option></select>
+  </div>
+  <div id="historyList"></div>
+</section>
 
 <details class="card teach" id="diagCard">
   <summary>Diagnóstico del navegador</summary>
@@ -977,16 +1018,226 @@ function render(f){
   $('resultCard').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
+/* --- almacenamiento local (IndexedDB) --- */
+const DB_NAME='maullidos', DB_VER=1;
+let db=null, cats=[], currentCatId=null, examples=[];
+
+function idbOpen(){
+  return new Promise(res=>{
+    if(!window.indexedDB) return res(null);
+    let rq;
+    try{ rq = indexedDB.open(DB_NAME, DB_VER); }catch(e){ return res(null); }
+    rq.onupgradeneeded = e=>{
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains('cats')) d.createObjectStore('cats',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('examples')){
+        const st = d.createObjectStore('examples',{keyPath:'id'});
+        st.createIndex('catId','catId',{unique:false});
+      }
+    };
+    rq.onsuccess = ()=>res(rq.result);
+    rq.onerror   = ()=>res(null);
+    rq.onblocked = ()=>res(null);
+  });
+}
+function idbReq(r){ return new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+function store(name, mode){ return db.transaction(name, mode).objectStore(name); }
+const uid = ()=> Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+
+async function dbGetCats(){ return db ? await idbReq(store('cats','readonly').getAll()) : []; }
+async function dbPutCat(c){ if(db) await idbReq(store('cats','readwrite').put(c)); }
+async function dbDeleteCat(id){
+  if(!db) return;
+  await idbReq(store('cats','readwrite').delete(id));
+  const st = store('examples','readwrite');
+  const keys = await idbReq(st.index('catId').getAllKeys(id));
+  for(const k of keys) st.delete(k);
+}
+async function dbGetExamples(catId){
+  if(!db) return [];
+  const all = await idbReq(store('examples','readonly').index('catId').getAll(catId));
+  return all.sort((a,b)=>b.date-a.date);
+}
+async function dbPutExample(ex){ if(db) await idbReq(store('examples','readwrite').put(ex)); }
+async function dbDeleteExample(id){ if(db) await idbReq(store('examples','readwrite').delete(id)); }
+
+async function refreshStorage(){
+  const el = $('storageInfo');
+  if(!db){ el.textContent = 'Este navegador no permite guardar datos: los ejemplos durarán solo hasta que cierres la pestaña.'; return; }
+  let txt = '';
+  try{
+    if(navigator.storage && navigator.storage.estimate){
+      const est = await navigator.storage.estimate();
+      if(est && est.usage) txt = 'Espacio ocupado: ' + (est.usage/1048576).toFixed(1) + ' MB. ';
+    }
+  }catch(e){}
+  const n = examples.length;
+  el.textContent = txt + n + (n===1 ? ' grabación guardada' : ' grabaciones guardadas') + ' para este gato.';
+}
+
+/* --- perfiles --- */
+async function loadCats(){
+  cats = (await dbGetCats()).sort((a,b)=>a.created-b.created);
+  if(!cats.length){
+    const c = {id:uid(), name:'Mi gato', created:Date.now()};
+    await dbPutCat(c);
+    cats = [c];
+  }
+  if(!currentCatId || !cats.some(c=>c.id===currentCatId)) currentCatId = cats[0].id;
+  renderCatSelect();
+  await loadExamples();
+}
+function renderCatSelect(){
+  const sel = $('catSelect');
+  sel.innerHTML = '';
+  for(const c of cats){
+    const o = document.createElement('option');
+    o.value = c.id; o.textContent = c.name;
+    if(c.id === currentCatId) o.selected = true;
+    sel.appendChild(o);
+  }
+  const cur = cats.find(c=>c.id===currentCatId);
+  $('histCatName').textContent = cur ? cur.name : 'tu gato';
+}
+async function loadExamples(){
+  examples = await dbGetExamples(currentCatId);
+  dataset = examples.map(e=>({label:e.label, vec:e.vec}));
+  updateDataset();
+  renderHistory();
+  refreshStorage();
+  if(lastFeatures && !resultEl.hidden) render(lastFeatures);
+}
+$('catSelect').addEventListener('change', async e=>{
+  currentCatId = e.target.value;
+  renderCatSelect();
+  await loadExamples();
+});
+$('newCatBtn').addEventListener('click', async ()=>{
+  const name = (prompt('¿Cómo se llama?') || '').trim();
+  if(!name) return;
+  const c = {id:uid(), name:name.slice(0,40), created:Date.now()};
+  await dbPutCat(c);
+  currentCatId = c.id;
+  await loadCats();
+});
+$('renameCatBtn').addEventListener('click', async ()=>{
+  const cur = cats.find(c=>c.id===currentCatId);
+  if(!cur) return;
+  const name = (prompt('Nuevo nombre:', cur.name) || '').trim();
+  if(!name) return;
+  cur.name = name.slice(0,40);
+  await dbPutCat(cur);
+  await loadCats();
+});
+$('deleteCatBtn').addEventListener('click', async ()=>{
+  const cur = cats.find(c=>c.id===currentCatId);
+  if(!cur) return;
+  if(cats.length === 1){ alert('Necesitas al menos un perfil. Renómbralo si quieres empezar de cero.'); return; }
+  if(!confirm('¿Eliminar a ' + cur.name + ' y sus ' + examples.length + ' grabaciones? No se puede deshacer.')) return;
+  await dbDeleteCat(cur.id);
+  currentCatId = null;
+  await loadCats();
+});
+
+/* --- historial --- */
+let histFilterValue = '';
+function renderHistory(){
+  const box = $('historyList');
+  const sel = $('histFilter');
+  const present = [...new Set(examples.map(e=>e.label))];
+  sel.innerHTML = '';
+  const optAll = document.createElement('option');
+  optAll.value = ''; optAll.textContent = 'Todas las etiquetas';
+  sel.appendChild(optAll);
+  for(const k of present){
+    const o = document.createElement('option');
+    o.value = k; o.textContent = CATS[k] ? CATS[k].label : k;
+    if(k === histFilterValue) o.selected = true;
+    sel.appendChild(o);
+  }
+  const list = examples.filter(e => !histFilterValue || e.label === histFilterValue);
+  box.innerHTML = '';
+  if(!list.length){
+    const p = document.createElement('p');
+    p.className = 'hist-empty';
+    p.textContent = 'Todavía no hay grabaciones guardadas. Analiza un maullido y etiquétalo arriba para que aparezca aquí.';
+    box.appendChild(p);
+    return;
+  }
+  for(const ex of list){
+    const row = document.createElement('div');
+    row.className = 'hist-item';
+    const cat = CATS[ex.label];
+    const dt = new Date(ex.date);
+    const fecha = dt.toLocaleDateString('es-ES',{day:'2-digit',month:'short'}) + ' · ' +
+                  dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const m = ex.meta || {};
+    const meta = [fecha,
+      m.f0 ? Math.round(m.f0) + ' Hz' : null,
+      m.dur ? m.dur.toFixed(2) + ' s' : null,
+      m.syl ? m.syl + (m.syl === 1 ? ' sílaba' : ' sílabas') : null
+    ].filter(Boolean).join(' · ');
+
+    const main = document.createElement('div');
+    main.className = 'hist-main';
+    const t = document.createElement('div');
+    t.className = 'hist-label';
+    t.textContent = cat ? cat.emoji + ' ' + cat.label : ex.label;
+    const sub = document.createElement('div');
+    sub.className = 'hist-meta';
+    sub.textContent = meta;
+    main.appendChild(t); main.appendChild(sub);
+    row.appendChild(main);
+
+    if(ex.audio){
+      const play = document.createElement('button');
+      play.className = 'hist-btn'; play.textContent = 'Escuchar';
+      play.addEventListener('click', ()=>{
+        player.src = URL.createObjectURL(ex.audio);
+        player.style.display = 'block';
+        player.play().catch(()=>{});
+      });
+      row.appendChild(play);
+    }
+    const del = document.createElement('button');
+    del.className = 'hist-btn'; del.textContent = 'Borrar';
+    del.addEventListener('click', async ()=>{
+      if(!confirm('¿Borrar esta grabación?')) return;
+      await dbDeleteExample(ex.id);
+      await loadExamples();
+    });
+    row.appendChild(del);
+    box.appendChild(row);
+  }
+}
+$('histFilter').addEventListener('change', e=>{ histFilterValue = e.target.value; renderHistory(); });
+
 /* --- entrenamiento --- */
 function updateChips(){
   const box = $('labelChips');
   box.innerHTML = Object.entries(CATS).map(([k,v])=>
     `<button class="chip" data-label="${k}" ${lastFeatures?'':'disabled'}>${v.emoji} ${v.label}</button>`).join('');
-  box.querySelectorAll('.chip').forEach(b=>b.addEventListener('click', ()=>{
+  box.querySelectorAll('.chip').forEach(b=>b.addEventListener('click', async ()=>{
     if(!lastFeatures) return;
-    dataset.push({label:b.dataset.label, vec:FEATS(lastFeatures)});
-    updateDataset();
-    render(lastFeatures);
+    const f = lastFeatures;
+    const ex = {
+      id: uid(),
+      catId: currentCatId,
+      label: b.dataset.label,
+      vec: FEATS(f),
+      date: Date.now(),
+      meta: {f0:f.f0Median, dur:f.durationTotal, syl:f.syllables},
+      audio: (recBlob && recBlob.size < 4*1024*1024) ? recBlob : null
+    };
+    if(db){
+      await dbPutExample(ex);
+      await loadExamples();
+    }else{
+      examples.unshift(ex);
+      dataset.push({label:ex.label, vec:ex.vec});
+      updateDataset(); renderHistory(); refreshStorage();
+    }
+    render(f);
   }));
   updateDataset();
 }
@@ -1003,11 +1254,13 @@ function updateDataset(){
 }
 
 $('exportBtn').addEventListener('click', ()=>{
-  if(!dataset.length){ alert('Todavía no hay ejemplos que exportar.'); return; }
-  const blob = new Blob([JSON.stringify({version:1, dataset}, null, 2)], {type:'application/json'});
+  if(!examples.length){ alert('Todavía no hay ejemplos que exportar.'); return; }
+  const cur = cats.find(c=>c.id===currentCatId);
+  const plain = examples.map(e=>({label:e.label, vec:e.vec, date:e.date, meta:e.meta}));
+  const blob = new Blob([JSON.stringify({version:2, cat:cur?cur.name:'', dataset:plain}, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'maullidos-ejemplos.json';
+  a.download = 'maullidos-' + ((cur && cur.name) || 'gato').replace(/[^a-z0-9]+/gi,'_').toLowerCase() + '.json';
   a.click();
 });
 $('importBtn').addEventListener('click', ()=>$('importInput').click());
@@ -1017,17 +1270,23 @@ $('importInput').addEventListener('change', async e=>{
   try{
     const data = JSON.parse(await file.text());
     if(!Array.isArray(data.dataset)) throw new Error('formato');
-    dataset = dataset.concat(data.dataset.filter(d=>CATS[d.label] && Array.isArray(d.vec)));
-    updateDataset();
-    if(lastFeatures) render(lastFeatures);
+    const valid = data.dataset.filter(d=>CATS[d.label] && Array.isArray(d.vec));
+    for(const d of valid){
+      const ex = {id:uid(), catId:currentCatId, label:d.label, vec:d.vec,
+                  date:d.date || Date.now(), meta:d.meta || {}, audio:null};
+      if(db) await dbPutExample(ex); else examples.push(ex);
+    }
+    if(db) await loadExamples(); else { dataset = examples.map(x=>({label:x.label,vec:x.vec})); updateDataset(); renderHistory(); }
+    alert(valid.length + ' ejemplos importados.');
   }catch(err){ alert('Ese archivo no tiene el formato esperado.'); }
   e.target.value = '';
 });
-$('clearBtn').addEventListener('click', ()=>{
-  if(dataset.length && confirm('¿Borrar los ' + dataset.length + ' ejemplos guardados?')){
-    dataset = []; updateDataset();
-    if(lastFeatures) render(lastFeatures);
-  }
+$('clearBtn').addEventListener('click', async ()=>{
+  if(!examples.length) return;
+  if(!confirm('¿Borrar las ' + examples.length + ' grabaciones de este gato?')) return;
+  for(const ex of examples) await dbDeleteExample(ex.id);
+  examples = []; dataset = [];
+  await loadExamples();
 });
 
 /* --- arranque --- */
@@ -1079,6 +1338,19 @@ if(!ready){
 }
 clearScope('la onda aparecerá aquí');
 updateChips();
+
+/* --- persistencia y aplicación instalable --- */
+(async function boot(){
+  db = await idbOpen();
+  try{
+    if(db && navigator.storage && navigator.storage.persist) await navigator.storage.persist();
+  }catch(e){}
+  await loadCats();
+})();
+
+if('serviceWorker' in navigator && location.protocol === 'https:'){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
 </script>
 </body>
 </html>
