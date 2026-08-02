@@ -3,7 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analizador de maullidos</title>
+
+<!-- ============================================================
+     SEO. URL de publicación: https://nomeacuerdo1978.github.io/maullidos/
+     ============================================================ -->
+<title>Analizador de maullidos: qué te dice tu gato | Análisis acústico gratis</title>
+<meta name="description" content="Graba el maullido de tu gato y analiza su tono, duración y melodía en el navegador. Herramienta gratuita de bioacústica felina para entender qué pide, cuándo juega y cuándo conviene ir al veterinario.">
+<link rel="canonical" href="https://nomeacuerdo1978.github.io/maullidos/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="theme-color" content="#0f6f6a">
+<meta name="author" content="Tu nombre">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Analizador de maullidos">
+<meta property="og:title" content="Analizador de maullidos: qué te dice tu gato">
+<meta property="og:description" content="Graba a tu gato y mide el tono, la duración y la melodía de su maullido. Gratis, sin registro y sin subir el audio a ningún servidor.">
+<meta property="og:url" content="https://nomeacuerdo1978.github.io/maullidos/">
+<meta property="og:image" content="https://nomeacuerdo1978.github.io/maullidos/portada.png">
+<meta property="og:image:alt" content="Contorno de tono de un maullido dibujado sobre una cuadrícula de frecuencias">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Analizador de maullidos: qué te dice tu gato">
+<meta name="twitter:description" content="Mide el tono, la duración y la melodía del maullido de tu gato desde el navegador. Gratis y privado.">
+<meta name="twitter:image" content="https://nomeacuerdo1978.github.io/maullidos/portada.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://nomeacuerdo1978.github.io/maullidos/#app",
+      "name": "Analizador de maullidos",
+      "url": "https://nomeacuerdo1978.github.io/maullidos/",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Navegador web (Chrome, Safari, Firefox, Edge)",
+      "inLanguage": "es",
+      "description": "Herramienta gratuita que graba el maullido de un gato y mide su frecuencia fundamental, duración, número de sílabas y estabilidad tonal para proponer una interpretación del comportamiento felino.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+      "featureList": [
+        "Análisis acústico del maullido en tiempo real",
+        "Detección de tono fundamental y contorno melódico",
+        "Segmentación en sílabas",
+        "Modelo personalizable con ejemplos del propio gato",
+        "Procesamiento local: el audio no sale del dispositivo"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://nomeacuerdo1978.github.io/maullidos/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Se puede saber qué quiere un gato por su maullido?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Solo de forma aproximada. La investigación en bioacústica felina, como el proyecto Meowsic de la Universidad de Lund, indica que el significado de cada maullido es en buena medida individual y depende del contexto. Las medidas acústicas son objetivas, pero su traducción a intenciones es una hipótesis, no un diagnóstico."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Por qué mi gato maúlla mucho de repente?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Un aumento repentino de vocalizaciones puede deberse a hambre, aburrimiento, cambios en la rutina o el entorno, celo en animales no esterilizados, o a problemas de salud como hipertiroidismo, dolor o deterioro cognitivo en gatos mayores. Si el cambio es brusco o va acompañado de otros síntomas, conviene una revisión veterinaria."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Los gatos maúllan entre ellos?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Muy poco. El maullido adulto es sobre todo un canal de comunicación dirigido a las personas, desarrollado durante la domesticación. Entre gatos predominan el lenguaje corporal, las marcas olfativas y sonidos como el bufido o el gruñido."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué frecuencia tiene el maullido de un gato?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "La frecuencia fundamental del maullido doméstico suele situarse entre 300 y 900 hercios, con armónicos que se extienden a varios kilohercios. Los cachorros vocalizan más agudo que los adultos, y el ronroneo ocurre en un rango mucho más grave, en torno a 25-30 hercios."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿La herramienta envía el audio a algún servidor?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Todo el procesamiento se ejecuta en el navegador mediante la Web Audio API. La grabación no se sube a ningún servidor ni se almacena fuera de la pestaña."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -111,6 +206,13 @@ h3.sec{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transfo
 .dataset{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-top:10px}
 .dataset b{color:var(--ink)}
 .note{font-size:.8rem;color:var(--muted);margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+/* contenido editorial */
+.prose{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
+.prose h2{font-family:var(--display);font-size:1.25rem;letter-spacing:-.01em;margin:26px 0 8px}
+.prose h2:first-child{margin-top:0}
+.prose h3{font-family:var(--display);font-size:1rem;font-weight:500;margin:16px 0 4px}
+.prose p{font-size:.94rem;color:#2d3644;margin-bottom:10px}
+.prose strong{font-weight:600;color:var(--ink)}
 .warn{background:#fdf3f3;border-left:3px solid var(--alert);padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin-bottom:12px}
 </style>
 </head>
@@ -163,7 +265,54 @@ h3.sec{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transfo
   <p class="note">Los ejemplos viven solo en esta pestaña. Expórtalos a un archivo si quieres conservarlos.</p>
 </details>
 
+<details class="card teach" id="diagCard">
+  <summary>Diagnóstico del navegador</summary>
+  <p>Si la grabación no arranca, aquí verás exactamente qué falta.</p>
+  <div id="diagOut" class="dataset"></div>
+</details>
+
 <p class="note">Las medidas acústicas son reales y reproducibles. La interpretación, no: no existe un catálogo validado que traduzca maullidos a intenciones, y los estudios disponibles (por ejemplo el proyecto Meowsic de Susanne Schötz) apuntan a que el significado es en buena medida individual y depende del contexto. Tómalo como una lectura orientativa, no como un diagnóstico. Si sospechas dolor, la referencia es el veterinario, no esta página.</p>
+
+<article class="prose">
+
+  <h2>Qué mide realmente esta herramienta</h2>
+  <p>Un maullido no es un sonido plano: es una melodía corta con una forma muy concreta. Esta página descompone la grabación en ventanas de 64&nbsp;milisegundos y extrae de cada una la <strong>frecuencia fundamental</strong> —el tono, medido en hercios—, la energía, la estabilidad del periodo y el reparto de la energía entre graves y agudos. Con esa serie temporal reconstruye el contorno melódico completo, cuenta las sílabas y calcula si el tono sube o baja, cuántos semitonos recorre y cuánto tiembla.</p>
+  <p>Son datos objetivos: dos personas que analicen la misma grabación obtienen los mismos números. Lo que no es objetivo es la traducción de esos números a intenciones, y por eso la herramienta enseña siempre las medidas junto al veredicto, y no solo el veredicto.</p>
+
+  <h2>Los sonidos del gato y qué significan</h2>
+  <h3>Maullido</h3>
+  <p>Es la vocalización dirigida a las personas. Los gatos adultos apenas maúllan entre ellos: el maullido tal como lo conocemos se desarrolló durante la domesticación como canal de comunicación con nosotros. Su frecuencia fundamental suele moverse entre 300 y 900 hercios. Los maullidos de solicitud tienden a ser más largos y con final ascendente; los de saludo, breves y agudos.</p>
+  <h3>Ronroneo</h3>
+  <p>Ocurre en torno a los 25-30 hercios, muy por debajo del rango del maullido, y se produce tanto en situaciones de bienestar como de malestar o dolor: no es un indicador fiable de que el gato esté contento. Esta herramienta no lo detecta bien porque su análisis de tono empieza en 180 hercios.</p>
+  <h3>Chirrido y castañeteo</h3>
+  <p>Ese sonido entrecortado que hace el gato mirando por la ventana a los pájaros. Es breve, agudo y muy modulado, y aparece ligado a la excitación de caza.</p>
+  <h3>Bufido y gruñido</h3>
+  <p>Son sonidos ruidosos, sin tono definido: en el análisis se reconocen porque la armonicidad se desploma y la planitud espectral se dispara. Señalan que el gato se siente amenazado y pide distancia. Ante un bufido, lo eficaz es retirarse, no insistir.</p>
+
+  <h2>Por qué maúlla más de lo normal</h2>
+  <p>Un cambio brusco en la cantidad o el tipo de vocalizaciones merece atención. Las causas habituales son el hambre y las rutinas de comida mal ajustadas, el aburrimiento por falta de estímulo, los cambios en el entorno (mudanzas, obras, un animal nuevo), el celo en animales sin esterilizar y la búsqueda de atención que, sin querer, hemos reforzado respondiendo siempre al maullido.</p>
+  <p>También hay causas médicas: el hipertiroidismo, la hipertensión, el dolor articular y el deterioro cognitivo en gatos mayores cursan con aumento de vocalización, a menudo nocturna. <strong>Si el cambio es repentino, si el maullido suena distinto de lo habitual o si viene acompañado de pérdida de peso, cambios en el apetito, en la bebida o en el uso del arenero, la respuesta correcta es una consulta veterinaria, no una app.</strong> Ninguna herramienta acústica sustituye una exploración.</p>
+
+  <h2>Juego y enriquecimiento ambiental</h2>
+  <p>Buena parte de los maullidos insistentes de un gato de interior son una petición de estímulo. El juego felino imita la secuencia de caza —acecho, persecución, captura, mordisco y desconexión—, y funciona mejor en sesiones cortas y frecuentes que en una sesión larga al día. Dos o tres tandas de diez minutos, con una caña con plumas o un ratón de tela que se mueva como una presa (alejándose, escondiéndose, nunca hacia el gato), y terminando siempre con una captura real que pueda morder, dejan al animal mucho más tranquilo que cualquier juguete automático.</p>
+  <p>El enriquecimiento pasivo importa igual: altura para trepar y observar, cajas y escondites, rascadores verticales y horizontales, un mirador junto a la ventana, y comederos interactivos que obliguen a trabajar la comida en lugar de servirla en un cuenco. Repartir la ración diaria en varias tomas pequeñas suele reducir mucho los maullidos de madrugada.</p>
+
+  <h2>Cómo grabar para obtener un buen análisis</h2>
+  <p>Acércate a menos de un metro, graba en una habitación silenciosa y sin televisión de fondo, y captura el maullido completo desde antes de que empiece hasta después de que termine. Deja medio segundo de silencio a cada lado: el análisis lo usa para estimar el ruido de fondo. Evita el ruido de manos rozando el micrófono, que satura las frecuencias graves y contamina las medidas.</p>
+
+  <h2>Preguntas frecuentes</h2>
+  <h3>¿Se puede saber qué quiere un gato por su maullido?</h3>
+  <p>Solo de forma aproximada. Los estudios de bioacústica felina indican que el significado es en buena medida individual: dos gatos pueden usar sonidos casi idénticos para cosas distintas. Por eso la herramienta incluye un modo de aprendizaje con ejemplos etiquetados de tu propio gato, que es la única vía realista hacia algo parecido a la precisión.</p>
+  <h3>¿Qué frecuencia tiene el maullido de un gato?</h3>
+  <p>La fundamental suele estar entre 300 y 900 hercios, con armónicos que llegan a varios kilohercios. Los cachorros vocalizan más agudo que los adultos.</p>
+  <h3>¿Los gatos maúllan entre ellos?</h3>
+  <p>Muy poco. Entre gatos predominan el lenguaje corporal, las marcas olfativas y sonidos como el bufido. El maullido está dirigido casi siempre a las personas.</p>
+  <h3>¿El audio se sube a algún servidor?</h3>
+  <p>No. Todo el procesamiento ocurre en el navegador con la Web Audio API. La grabación no sale del dispositivo y desaparece al cerrar la pestaña.</p>
+  <h3>¿Funciona en iPhone?</h3>
+  <p>Sí, en Safari sobre iOS 14.3 o posterior, siempre que la página se sirva por HTTPS. Safari bloquea el micrófono en páginas abiertas como archivo local.</p>
+
+</article>
 
 </div>
 
@@ -578,11 +727,33 @@ function drawScope(){
 }
 
 async function startRecording(){
+  if(!window.isSecureContext){
+    statusEl.textContent = 'Safari solo da acceso al micrófono en páginas HTTPS. Abre el diagnóstico de abajo.';
+    $('diagCard').open = true;
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    statusEl.textContent = 'Este navegador no expone el micrófono. Abre el diagnóstico de abajo.';
+    $('diagCard').open = true;
+    return;
+  }
   try{
     stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
   }catch(e){
-    statusEl.textContent = 'No se pudo acceder al micrófono. Revisa los permisos del navegador y vuelve a intentarlo.';
-    return;
+    try{                                          // reintento sin restricciones: iOS las rechaza a veces
+      stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    }catch(e2){
+      const msgs = {
+        NotAllowedError:'Has denegado el micrófono. En iPhone: Ajustes › Safari › Micrófono, o toca «aA» en la barra de direcciones › Ajustes del sitio web.',
+        NotFoundError:'No se detecta ningún micrófono.',
+        NotReadableError:'El micrófono lo está usando otra app. Ciérrala y vuelve a intentarlo.',
+        SecurityError:'El navegador bloquea el micrófono por seguridad: la página debe servirse por HTTPS.',
+        AbortError:'El sistema interrumpió el acceso al micrófono.'
+      };
+      statusEl.textContent = msgs[e2.name] || ('No se pudo acceder al micrófono (' + e2.name + ').');
+      $('diagCard').open = true;
+      return;
+    }
   }
   const Ctx = window.AudioContext || window.webkitAudioContext;
   audioCtx = new Ctx();
@@ -593,7 +764,7 @@ async function startRecording(){
   srcNode.connect(analyser);
 
   const types = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
-  const mime = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+  const mime = types.find(t => window.MediaRecorder.isTypeSupported && window.MediaRecorder.isTypeSupported(t));
   chunks = [];
   mediaRecorder = mime ? new MediaRecorder(stream, {mimeType:mime}) : new MediaRecorder(stream);
   mediaRecorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
@@ -627,6 +798,17 @@ function stopRecording(){
   if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
 }
 
+/* Blob.arrayBuffer() no existe antes de Safari 14: respaldo con FileReader */
+function readArrayBuffer(blob){
+  if(blob.arrayBuffer) return blob.arrayBuffer();
+  return new Promise((resolve, reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>resolve(fr.result);
+    fr.onerror = ()=>reject(fr.error);
+    fr.readAsArrayBuffer(blob);
+  });
+}
+
 function decode(arrayBuffer){
   const Ctx = window.AudioContext || window.webkitAudioContext;
   const ctx = new Ctx();
@@ -640,8 +822,9 @@ async function analyzeBlob(blob){
   statusEl.textContent = 'Analizando…';
   analyzeBtn.disabled = true;
   try{
-    const ab = await blob.arrayBuffer();
+    const ab = await readArrayBuffer(blob);
     const {buf, ctx} = await decode(ab);
+    if(ctx.state === 'suspended'){ try{ await ctx.resume(); }catch(e){} }
     const mono = toMono(buf);
     const f = analyzeSignal(mono, buf.sampleRate);
     try{ ctx.close(); }catch(e){}
@@ -867,9 +1050,32 @@ window.addEventListener('resize', ()=>{
   if(lastFeatures && !resultEl.hidden) drawContour(lastFeatures);
 });
 
-if(!navigator.mediaDevices || !window.MediaRecorder){
+function runDiagnostics(){
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  const mimes = ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus']
+    .filter(t => window.MediaRecorder && window.MediaRecorder.isTypeSupported && window.MediaRecorder.isTypeSupported(t));
+  const checks = [
+    ['Protocolo', location.protocol, location.protocol === 'https:' || location.hostname === 'localhost'],
+    ['Contexto seguro', window.isSecureContext ? 'sí' : 'NO', !!window.isSecureContext],
+    ['Acceso a micrófono', (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? 'disponible' : 'NO expuesto', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)],
+    ['MediaRecorder', window.MediaRecorder ? 'sí' : 'NO', !!window.MediaRecorder],
+    ['Formatos de grabación', mimes.length ? mimes.join(', ') : 'ninguno', mimes.length > 0],
+    ['Web Audio', Ctx ? 'sí' : 'NO', !!Ctx],
+    ['Blob.arrayBuffer', Blob.prototype.arrayBuffer ? 'nativo' : 'respaldo FileReader', true]
+  ];
+  $('diagOut').innerHTML = checks.map(([k,v,ok])=>
+    `<div style="padding:3px 0">${ok ? '✅' : '❌'} ${k}: <b>${v}</b></div>`).join('') +
+    `<div style="padding:6px 0 0;font-size:.72rem;line-height:1.5">${navigator.userAgent}</div>`;
+  return checks.every(c => c[2]);
+}
+
+const ready = runDiagnostics();
+if(!ready){
   recBtn.disabled = true;
-  statusEl.textContent = 'Este navegador no permite grabar. Puedes analizar un archivo de audio.';
+  $('diagCard').open = true;
+  statusEl.textContent = !window.isSecureContext
+    ? 'Sin HTTPS el micrófono está bloqueado. Puedes analizar un archivo de audio igualmente.'
+    : 'Este navegador no permite grabar. Puedes analizar un archivo de audio.';
 }
 clearScope('la onda aparecerá aquí');
 updateChips();
