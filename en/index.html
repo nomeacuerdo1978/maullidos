@@ -620,7 +620,7 @@ function analyzeSignal(mono, sampleRate){
   });
   const sortedRms = Float64Array.from(smooth).sort();
   const noiseFloor = sortedRms[Math.floor(sortedRms.length*0.05)];
-  // el ruido de fondo puede subir el umbral, pero nunca por encima del 25% del pico:
+  // background noise can raise the threshold, but never above 25% of the peak:
   // si no, en grabaciones sin silencio inicial se recortaría la propia vocalización
   const thr = Math.max(Math.min(noiseFloor*3, maxRms*0.25), maxRms*0.08, 0.008);
 
@@ -694,51 +694,51 @@ function analyzeSignal(mono, sampleRate){
 }
 
 /* ==========================================================
-   2. INTERPRETACIÓN (reglas transparentes)
+   2. INTERPRETATION (transparent rules)
    ========================================================== */
 const CATS = {
-  comida:  {label:'Pide algo (comida, atención)', emoji:'🍽️'},
-  greeting:  {label:'Saludo o reconocimiento',      emoji:'👋'},
-  play:   {label:'Excitación o ganas de jugar',  emoji:'🎾'},
-  estres:  {label:'Molestia o incomodidad',       emoji:'😾'},
-  pain:   {label:'Malestar intenso o pain',     emoji:'🩺'}
+  food:     {label:'Asking for something (food, attention)', emoji:'🍽️'},
+  greeting: {label:'Greeting or recognition',                emoji:'👋'},
+  play:     {label:'Excitement or wanting to play',          emoji:'🎾'},
+  stress:   {label:'Annoyance or discomfort',                emoji:'😾'},
+  pain:     {label:'Intense distress or pain',               emoji:'🩺'}
 };
 
 const RULES = [
   {test:f=>f.durationTotal<0.5 && f.harmonicity>0.55,
-   add:{greeting:35, play:12}, why:f=>`Vocalización muy breve (${f.durationTotal.toFixed(2)} s): más propia de un greeting que de una petición.`},
+   add:{greeting:35, play:12}, why:f=>`Very brief vocalisation (${f.durationTotal.toFixed(2)} s): more typical of a greeting than a request.`},
   {test:f=>f.syllables>=3,
-   add:{comida:32, play:14}, why:f=>`Llamada repetida (${f.syllables} sílabas): la insistencia suele acompañar a una petición.`},
+   add:{food:32, play:14}, why:f=>`Repeated call (${f.syllables} syllables): insistence usually accompanies a request.`},
   {test:f=>f.syllables===2,
-   add:{comida:14, greeting:8}, why:()=>`Dos sílabas encadenadas: patrón habitual del maullido dirigido a personas.`},
+   add:{food:14, greeting:8}, why:()=>`Two chained syllables: a common pattern in human-directed meowing.`},
   {test:f=>f.slopeSemitonesPerSec>3,
-   add:{comida:24, play:8}, why:f=>`Tono ascendente (+${f.slopeSemitonesPerSec.toFixed(1)} semitonos/s): en gatos domésticos se asocia a llamadas de solicitud.`},
+   add:{food:24, play:8}, why:f=>`Rising pitch (+${f.slopeSemitonesPerSec.toFixed(1)} semitones/s): in domestic cats this is associated with request calls.`},
   {test:f=>f.endShiftSemitones>2,
-   add:{comida:14, greeting:8}, why:f=>`Acaba ${f.endShiftSemitones.toFixed(1)} semitonos más agudo de lo que empieza.`},
+   add:{food:14, greeting:8}, why:f=>`Ends ${f.endShiftSemitones.toFixed(1)} semitones higher than it begins.`},
   {test:f=>f.slopeSemitonesPerSec<-3,
-   add:{estres:20, pain:10}, why:f=>`Tono descendente (${f.slopeSemitonesPerSec.toFixed(1)} semitonos/s): más frecuente en llamadas de queja.`},
+   add:{stress:20, pain:10}, why:f=>`Falling pitch (${f.slopeSemitonesPerSec.toFixed(1)} semitones/s): more frequent in complaint calls.`},
   {test:f=>f.durationTotal>1.3 && f.f0Median>=450,
-   add:{comida:18, pain:10}, why:f=>`Llamada larga y aguda (${f.durationTotal.toFixed(2)} s a ${Math.round(f.f0Median)} Hz).`},
+   add:{food:18, pain:10}, why:f=>`Long, high-pitched call (${f.durationTotal.toFixed(2)} s at ${Math.round(f.f0Median)} Hz).`},
   {test:f=>f.durationTotal>1.3 && f.f0Median>0 && f.f0Median<450,
-   add:{estres:26, pain:18}, why:f=>`Llamada larga y grave (${Math.round(f.f0Median)} Hz): timbre de protesta más que de petición.`},
+   add:{stress:26, pain:18}, why:f=>`Long, low-pitched call (${Math.round(f.f0Median)} Hz): a protest timbre rather than a request.`},
   {test:f=>f.jitter>0.06,
-   add:{pain:24, estres:14}, why:f=>`Tono inestable (jitter ${(f.jitter*100).toFixed(1)}%): la voz "tiembla", señal de tensión.`},
+   add:{pain:24, stress:14}, why:f=>`Unstable pitch (jitter ${(f.jitter*100).toFixed(1)}%): the voice \"wavers\", a sign of tension.`},
   {test:f=>f.harmonicity<0.45 && f.flatness>0.25,
-   add:{estres:34, pain:14}, why:()=>`Sonido poco tonal y con mucho ruido: se parece más a un bufido o gruñido que a un maullido.`},
+   add:{stress:34, pain:14}, why:()=>`Low-tonal, noisy sound: closer to a hiss or growl than a meow.`},
   {test:f=>f.f0RangeSemitones>8,
-   add:{pain:14, comida:10}, why:f=>`Melodía muy modulada (${f.f0RangeSemitones.toFixed(1)} semitonos de recorrido).`},
+   add:{pain:14, food:10}, why:f=>`Highly modulated melody (${f.f0RangeSemitones.toFixed(1)} semitones of range).`},
   {test:f=>f.centroid>2200 && f.durationTotal<0.7,
-   add:{play:22}, why:f=>`Chirrido breve y brillante (centroide ${Math.round(f.centroid)} Hz): típico de excitación, caza o play.`},
+   add:{play:22}, why:f=>`Brief, bright chirp (centroid ${Math.round(f.centroid)} Hz): typical of excitement, hunting or play.`},
   {test:f=>f.f0Median>700 && f.durationTotal<1,
-   add:{greeting:14, play:14}, why:f=>`Sonido agudo y corto (${Math.round(f.f0Median)} Hz).`},
+   add:{greeting:14, play:14}, why:f=>`High-pitched, short sound (${Math.round(f.f0Median)} Hz).`},
   {test:f=>f.durationTotal>=0.5 && f.durationTotal<=1.3 && f.f0Median>=400 && f.f0Median<=750 && Math.abs(f.slopeSemitonesPerSec)<=3,
-   add:{comida:16, greeting:10}, why:()=>`Maullido de duración y tono medios, con melodía estable: el patrón más común del "miau" dirigido a personas.`},
+   add:{food:16, greeting:10}, why:()=>`Medium duration and pitch with a stable melody: the most common pattern of the human-directed \"meow\".`},
   {test:f=>f.peakLevelDb>-6 && f.durationTotal>1,
-   add:{pain:12, comida:10}, why:()=>`Emisión muy intensa y sostenida.`}
+   add:{pain:12, food:10}, why:()=>`Very loud, sustained emission.`}
 ];
 
 function classify(f){
-  const scores = {comida:6, greeting:6, play:6, estres:6, pain:6};
+  const scores = {food:6, greeting:6, play:6, stress:6, pain:6};
   const reasons = [];
   for(const r of RULES){
     let ok = false;
@@ -765,10 +765,10 @@ function roundTo100(pct){
 /* Calidad de la señal: si es mala, se avisa en vez de fingir precisión */
 function signalQuality(f){
   const problems = [];
-  if(f.peakLevelDb < -35) problems.push('la grabación está muy floja: acerca el micro');
-  if(f.durationTotal < 0.2) problems.push('el sonido detectado dura muy poco');
-  if(f.voicedRatio < 0.2) problems.push('apenas se detecta tono definido; puede ser ruido, un bufido o un ronroneo');
-  if(f.flatness > 0.45) problems.push('hay mucho ruido de fondo');
+  if(f.peakLevelDb < -35) problems.push('the recording is very faint: move the mic closer');
+  if(f.durationTotal < 0.2) problems.push('the detected sound is too short');
+  if(f.voicedRatio < 0.2) problems.push('barely any defined pitch detected; may be noise, a hiss or a purr');
+  if(f.flatness > 0.45) problems.push('there is a lot of background noise');
   let q = 1;
   q -= problems.length*0.25;
   q = Math.max(0.1, Math.min(1, q));
@@ -875,12 +875,12 @@ function drawScope(){
 
 async function startRecording(){
   if(!window.isSecureContext){
-    statusEl.textContent = 'Safari solo da acceso al micrófono en páginas HTTPS. Abre el diagnóstico de abajo.';
+    statusEl.textContent = 'Safari only grants microphone access on HTTPS pages. Open the diagnostics below.';
     $('diagCard').open = true;
     return;
   }
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    statusEl.textContent = 'Este navegador no expone el micrófono. Abre el diagnóstico de abajo.';
+    statusEl.textContent = 'This browser does not expose the microphone. Open the diagnostics below.';
     $('diagCard').open = true;
     return;
   }
@@ -891,13 +891,13 @@ async function startRecording(){
       stream = await navigator.mediaDevices.getUserMedia({audio:true});
     }catch(e2){
       const msgs = {
-        NotAllowedError:'Has denegado el micrófono. En iPhone: Ajustes › Safari › Micrófono, o toca «aA» en la barra de direcciones › Ajustes del sitio web.',
-        NotFoundError:'No se detecta ningún micrófono.',
-        NotReadableError:'El micrófono lo está usando otra app. Ciérrala y vuelve a intentarlo.',
-        SecurityError:'El navegador bloquea el micrófono por seguridad: la página debe servirse por HTTPS.',
-        AbortError:'El sistema interrumpió el acceso al micrófono.'
+        NotAllowedError:'You have denied microphone access. On iPhone: Settings › Safari › Microphone, or tap "aA" in the address bar › Website Settings.',
+        NotFoundError:'No microphone detected.',
+        NotReadableError:'The microphone is in use by another app. Close it and try again.',
+        SecurityError:'The browser is blocking the microphone for security: the page must be served over HTTPS.',
+        AbortError:'The system interrupted microphone access.'
       };
-      statusEl.textContent = msgs[e2.name] || ('No se pudo acceder al micrófono (' + e2.name + ').');
+      statusEl.textContent = msgs[e2.name] || ('Could not access the microphone (' + e2.name + ').');
       $('diagCard').open = true;
       return;
     }
@@ -926,7 +926,7 @@ async function startRecording(){
   mediaRecorder.start();
   recStart = performance.now();
   recBtn.disabled = true; stopBtn.disabled = false; analyzeBtn.disabled = true;
-  statusEl.textContent = 'Recording… detén cuando el maullido haya terminado.';
+  statusEl.textContent = 'Recording… stop when the meow has finished.';
   drawScope();
   autoStop = setTimeout(()=>{ if(mediaRecorder && mediaRecorder.state === 'recording') stopRecording(); }, 15000);
 }
@@ -976,15 +976,15 @@ async function analyzeBlob(blob){
     const f = analyzeSignal(mono, buf.sampleRate);
     try{ ctx.close(); }catch(e){}
     if(!f){
-      statusEl.textContent = 'No se detectó sonido suficiente. Graba más cerca del gato.';
+      statusEl.textContent = 'Not enough sound detected. Record closer to the cat.';
       analyzeBtn.disabled = false;
       return;
     }
     lastFeatures = f;
     render(f);
-    statusEl.textContent = 'Análisis completado.';
+    statusEl.textContent = 'Analysis complete.';
   }catch(e){
-    statusEl.textContent = 'No se pudo decodificar el audio. Prueba con otro formato o vuelve a grabar.';
+    statusEl.textContent = 'Could not decode the audio. Try another format or record again.';
   }
   analyzeBtn.disabled = false;
   updateChips();
@@ -1040,7 +1040,7 @@ function drawContour(f){
 
   if(!f.contour.length){
     ctx.textAlign = 'center'; ctx.fillStyle = '#b5323c';
-    ctx.fillText('Sin tono definido: el sonido no es armónico', w/2, h/2);
+    ctx.fillText('No defined pitch: the sound is not harmonic', w/2, h/2);
   }
 }
 
@@ -1051,12 +1051,12 @@ function render(f){
 
   let pct, mode;
   if(personal){
-    pct = {}; // 65% modelo personal, 35% reglas generales
+    pct = {}; // 65% personal model, 35% general rules
     for(const k in heur.pct) pct[k] = 0.65*(personal.pct[k]||0) + 0.35*heur.pct[k];
-    mode = `modelo personal (${personal.n} ejemplos) + reglas`;
+    mode = `personal model (${personal.n} examples) + rules`;
   }else{
     pct = heur.pct;
-    mode = 'reglas generales';
+    mode = 'general rules';
   }
   const rounded = roundTo100(pct);
   const sorted = Object.entries(rounded).sort((a,b)=>b[1]-a[1]);
@@ -1065,7 +1065,7 @@ function render(f){
   const conf = Math.round(Math.min(95, Math.max(15, (35 + margin*1.6) * qual.q)));
 
   const warn = qual.problems.length
-    ? `<div class="warn"><b>Ojo con la grabación:</b> ${qual.problems.join('; ')}.</div>` : '';
+    ? `<div class="warn"><b>Watch the recording:</b> ${qual.problems.join('; ')}.</div>` : '';
 
   const rows = sorted.map(([k,v],i)=>`
     <div class="row ${i===0?'top':''}">
@@ -1076,23 +1076,23 @@ function render(f){
 
   const why = heur.reasons.length
     ? heur.reasons.map(r=>`<li>${r}</li>`).join('')
-    : '<li>Ninguna de las pautas acústicas conocidas encaja con claridad. Es una vocalización atípica o la grabación no da suficiente detalle.</li>';
+    : '<li>None of the known acoustic patterns clearly match. This is an atypical vocalisation or the recording lacks detail.</li>';
 
   const m = (k,v) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   const metrics = [
-    m('Duración', f.durationTotal.toFixed(2)+' s'),
-    m('Sílabas', f.syllables),
-    m('Tono medio', f.f0Median ? Math.round(f.f0Median)+' Hz' : '—'),
-    m('Recorrido', f.f0RangeSemitones.toFixed(1)+' st'),
-    m('Pendiente', (f.slopeSemitonesPerSec>0?'+':'')+f.slopeSemitonesPerSec.toFixed(1)+' st/s'),
-    m('Armonicidad', f.harmonicity.toFixed(2)),
-    m('Inestabilidad', (f.jitter*100).toFixed(1)+' %'),
-    m('Brillo', Math.round(f.centroid)+' Hz'),
+    m('Duration', f.durationTotal.toFixed(2)+' s'),
+    m('Syllables', f.syllables),
+    m('Mean pitch', f.f0Median ? Math.round(f.f0Median)+' Hz' : '—'),
+    m('Range', f.f0RangeSemitones.toFixed(1)+' st'),
+    m('Slope', (f.slopeSemitonesPerSec>0?'+':'')+f.slopeSemitonesPerSec.toFixed(1)+' st/s'),
+    m('Harmonicity', f.harmonicity.toFixed(2)),
+    m('Instability', (f.jitter*100).toFixed(1)+' %'),
+    m('Brightness', Math.round(f.centroid)+' Hz'),
     m('Nivel pico', f.peakLevelDb.toFixed(1)+' dB')
   ].join('');
 
   const personalNote = personal
-    ? `<p class="note" style="border:0;padding:0;margin-top:10px">El ejemplo más parecido de tu colección estaba etiquetado como <b>${CATS[personal.nearest.label].label.toLowerCase()}</b>.</p>`
+    ? `<p class="note" style="border:0;padding:0;margin-top:10px">The closest example in your collection was labelled <b>${CATS[personal.nearest.label].label.toLowerCase()}</b>.</p>`
     : '';
 
   resultEl.innerHTML = `
@@ -1185,7 +1185,7 @@ async function refreshStorage(){
 async function loadCats(){
   cats = (await dbGetCats()).sort((a,b)=>a.created-b.created);
   if(!cats.length){
-    const c = {id:uid(), name:'Mi gato', created:Date.now()};
+    const c = {id:uid(), name:'My cat', created:Date.now()};
     await dbPutCat(c);
     cats = [c];
   }
@@ -1421,11 +1421,11 @@ function runDiagnostics(){
     .filter(t => window.MediaRecorder && window.MediaRecorder.isTypeSupported && window.MediaRecorder.isTypeSupported(t));
   const checks = [
     ['Protocol', location.protocol, location.protocol === 'https:' || location.hostname === 'localhost'],
-    ['Secure context', window.isSecureContext ? 'sí' : 'NO', !!window.isSecureContext],
-    ['Microphone access', (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? 'disponible' : 'NO expuesto', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)],
-    ['MediaRecorder', window.MediaRecorder ? 'sí' : 'NO', !!window.MediaRecorder],
+    ['Secure context', window.isSecureContext ? 'yes' : 'NO', !!window.isSecureContext],
+    ['Microphone access', (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? 'available' : 'NOT exposed', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)],
+    ['MediaRecorder', window.MediaRecorder ? 'yes' : 'NO', !!window.MediaRecorder],
     ['Recording formats', mimes.length ? mimes.join(', ') : 'none', mimes.length > 0],
-    ['Web Audio', Ctx ? 'sí' : 'NO', !!Ctx],
+    ['Web Audio', Ctx ? 'yes' : 'NO', !!Ctx],
     ['Blob.arrayBuffer', Blob.prototype.arrayBuffer ? 'native' : 'FileReader fallback', true]
   ];
   $('diagOut').innerHTML = checks.map(([k,v,ok])=>
@@ -1442,7 +1442,7 @@ if(!ready){
     ? 'Without HTTPS the microphone is blocked. You can still analyze an audio file.'
     : 'This browser does not allow recording. You can analyze an audio file.';
 }
-clearScope('la onda aparecerá aquí');
+clearScope('the waveform will appear here');
 updateChips();
 
 /* --- persistencia y aplicación instalable --- */
