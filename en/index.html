@@ -1097,7 +1097,7 @@ function render(f){
     m('Harmonicity', f.harmonicity.toFixed(2)),
     m('Instability', (f.jitter*100).toFixed(1)+' %'),
     m('Brightness', Math.round(f.centroid)+' Hz'),
-    m('Nivel pico', f.peakLevelDb.toFixed(1)+' dB')
+    m('Peak level', f.peakLevelDb.toFixed(1)+' dB')
   ].join('');
 
   const personalNote = personal
@@ -1108,23 +1108,23 @@ function render(f){
     ${warn}
     <div class="verdict">
       <h2>${CATS[topKey].emoji} ${CATS[topKey].label}</h2>
-      <span class="conf">confianza ${conf}% · ${mode}</span>
+      <span class="conf">confidence ${conf}% · ${mode}</span>
     </div>
-    <p class="verdict-note">Es la hipótesis que mejor encaja con lo medido, no una certeza.</p>
+    <p class="verdict-note">This is the hypothesis that best fits the measurements, not a certainty.</p>
 
     <div class="contour"><canvas id="contour"></canvas></div>
     <div class="legend">
-      <span><span class="swatch" style="background:var(--trace)"></span>tono (F0)</span>
-      <span><span class="swatch" style="background:rgba(224,137,30,.55)"></span>energía</span>
+      <span><span class="swatch" style="background:var(--trace)"></span>pitch (F0)</span>
+      <span><span class="swatch" style="background:rgba(224,137,30,.55)"></span>energy</span>
     </div>
 
     <div class="bars">${rows}</div>
 
-    <h3 class="sec">Por qué</h3>
+    <h3 class="sec">Why</h3>
     <ul class="why">${why}</ul>
     ${personalNote}
 
-    <h3 class="sec">Lo que se ha medido</h3>
+    <h3 class="sec">What was measured</h3>
     <div class="metrics">${metrics}</div>`;
 
   placeholderEl.hidden = true;
