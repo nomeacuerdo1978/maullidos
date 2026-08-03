@@ -154,14 +154,35 @@ h1{font-family:var(--display);font-size:1.9rem;line-height:1.1;letter-spacing:-.
 .controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .btn{
   flex:1 1 auto;min-width:130px;padding:12px 14px;border:1px solid transparent;border-radius:9px;
-  font-family:var(--body);font-size:.95rem;font-weight:600;cursor:pointer;transition:filter .15s,opacity .15s;
+  font-family:var(--body);font-size:.95rem;font-weight:600;cursor:pointer;
+  transition:filter .15s,opacity .15s,box-shadow .2s,background .15s;
 }
 .btn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
-.btn-rec{background:var(--signal);color:#fff}
-.btn-stop{background:var(--alert);color:#fff}
 .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);flex:0 1 auto;min-width:0}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:disabled{cursor:not-allowed}
 .btn:not(:disabled):hover{filter:brightness(1.08)}
+
+/* --- los tres botones principales, mismo tamaño --- */
+.controls.main{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.controls.main .btn{
+  min-width:0;width:100%;padding:13px 8px;font-size:.95rem;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-rec{background:var(--signal);color:#fff}
+.btn-stop{background:#fff;color:var(--alert);border-color:var(--alert)}
+.btn-stop:not(:disabled){background:var(--alert);color:#fff}
+.btn-go{background:var(--trace);color:#fff}
+.btn-go:not(:disabled){box-shadow:0 0 0 3px rgba(139,47,168,.20), 0 2px 8px rgba(139,47,168,.25)}
+/* inactivo: conserva el tono, pero apagado */
+.controls.main .btn:disabled{opacity:1;box-shadow:none}
+.btn-rec:disabled{background:#c2d8d6;color:#6f8d8a;border-color:transparent}
+.btn-stop:disabled{background:#fff;color:#d9a3a8;border-color:#ecc9cc}
+.btn-go:disabled{background:#dccae4;color:#8b7194;border-color:transparent}
+.btn .dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+@media(max-width:430px){
+  .controls.main{grid-template-columns:1fr 1fr}
+  .controls.main .btn-go{grid-column:1 / -1}
+}
 .filerow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:.82rem;color:var(--muted);flex-wrap:wrap}
 input[type=file]{display:none}
 .link{color:var(--signal);text-decoration:underline;cursor:pointer;background:none;border:none;font:inherit;padding:0}
@@ -261,10 +282,10 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
     <span class="timer" id="timer">0.0 s</span>
   </div>
   <p id="status">Listo para grabar.</p>
-  <div class="controls">
-    <button id="recBtn" class="btn btn-rec">Grabar</button>
+  <div class="controls main">
+    <button id="recBtn" class="btn btn-rec"><span class="dot"></span>Grabar</button>
     <button id="stopBtn" class="btn btn-stop" disabled>Detener</button>
-    <button id="analyzeBtn" class="btn btn-ghost" disabled>Analizar</button>
+    <button id="analyzeBtn" class="btn btn-go" disabled>Analizar</button>
   </div>
   <div class="filerow">
     <span>o bien</span>
