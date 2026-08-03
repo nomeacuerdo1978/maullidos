@@ -136,6 +136,27 @@ body{
   -webkit-text-size-adjust:100%;
 }
 .wrap{max-width:620px;margin:0 auto}
+nav.sitenav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(231,234,239,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  margin:0 -16px 16px;padding:0 16px;
+}
+nav.sitenav ul{
+  display:flex;gap:2px;list-style:none;
+  overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;white-space:nowrap;
+  max-width:620px;margin:0 auto;padding:0;
+}
+nav.sitenav ul::-webkit-scrollbar{display:none}
+nav.sitenav a{
+  display:block;padding:10px 10px 9px;font-size:.82rem;font-weight:500;
+  font-family:var(--body);color:var(--muted);text-decoration:none;
+  border-bottom:2px solid transparent;transition:color .15s,border-color .15s;
+}
+nav.sitenav a:hover{color:var(--ink)}
+nav.sitenav a.active{color:var(--signal);border-bottom-color:var(--signal)}
+@media(max-width:430px){nav.sitenav a{padding:9px 8px 8px;font-size:.78rem}}
+
 header{margin-bottom:18px}
 .eyebrow{
   font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
@@ -280,7 +301,18 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
   <p class="lede">Mide el tono, la duración y la textura de la vocalización, y dibuja su melodía. Después propone una interpretación —siempre con las medidas a la vista.</p>
 </header>
 
-<section class="card">
+<nav class="sitenav" aria-label="Secciones">
+  <ul>
+    <li><a href="#analizador">🎙 Analizar</a></li>
+    <li><a href="#profileCard">🐱 Mi gato</a></li>
+    <li><a href="#aprendizaje">🧠 Enseñar</a></li>
+    <li><a href="#historyCard">📋 Historial</a></li>
+    <li><a href="#guia">📖 Guía</a></li>
+    <li><a href="#faq">❓ FAQ</a></li>
+  </ul>
+</nav>
+
+<section class="card" id="analizador">
   <div class="scope">
     <canvas id="scope"></canvas>
     <span class="timer" id="timer">0.0 s</span>
@@ -317,7 +349,7 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
   <div class="dataset" id="storageInfo"></div>
 </section>
 
-<details class="card teach">
+<details class="card teach" id="aprendizaje">
   <summary>Enséñale a tu gato (mejora la precisión)</summary>
   <p>La relación entre sonido y significado varía mucho de un gato a otro: lo que en uno es petición de comida, en otro es saludo. Si grabas ejemplos etiquetados de <em>tu</em> gato en situaciones que ya conoces, el análisis pasa a compararlo con ellos en vez de con reglas generales.</p>
   <p>Analiza una grabación y luego márcala con lo que estaba pasando de verdad:</p>
@@ -349,7 +381,7 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
 
 <p class="note">Las medidas acústicas son reales y reproducibles. La interpretación, no: no existe un catálogo validado que traduzca maullidos a intenciones, y los estudios disponibles (por ejemplo el proyecto Meowsic de Susanne Schötz) apuntan a que el significado es en buena medida individual y depende del contexto. Tómalo como una lectura orientativa, no como un diagnóstico. Si sospechas dolor, la referencia es el veterinario, no esta página.</p>
 
-<article class="prose">
+<article class="prose" id="guia">
 
   <h2>Qué mide realmente esta herramienta</h2>
   <p>Un maullido no es un sonido plano: es una melodía corta con una forma muy concreta. Esta página descompone la grabación en ventanas de 64&nbsp;milisegundos y extrae de cada una la <strong>frecuencia fundamental</strong> —el tono, medido en hercios—, la energía, la estabilidad del periodo y el reparto de la energía entre graves y agudos. Con esa serie temporal reconstruye el contorno melódico completo, cuenta las sílabas y calcula si el tono sube o baja, cuántos semitonos recorre y cuánto tiembla.</p>
@@ -405,7 +437,7 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
   </ol>
   <p class="note" style="margin-top:18px">Esta web no está afiliada a ninguno de estos grupos de investigación, ni sus resultados avalan el clasificador que se usa aquí. El motor de reglas se inspira en las tendencias descritas en la literatura, pero no reproduce ningún método publicado ni ha sido validado experimentalmente.</p>
 
-  <h2>Preguntas frecuentes</h2>
+  <h2 id="faq">Preguntas frecuentes</h2>
   <h3>¿Se puede saber qué quiere un gato por su maullido?</h3>
   <p>Solo de forma aproximada. Los estudios de bioacústica felina indican que el significado es en buena medida individual: dos gatos pueden usar sonidos casi idénticos para cosas distintas. Por eso la herramienta incluye un modo de aprendizaje con ejemplos etiquetados de tu propio gato, que es la única vía realista hacia algo parecido a la precisión.</p>
   <h3>¿Qué frecuencia tiene el maullido de un gato?</h3>
@@ -1410,6 +1442,23 @@ updateChips();
     if(db && navigator.storage && navigator.storage.persist) await navigator.storage.persist();
   }catch(e){}
   await loadCats();
+})();
+
+/* --- nav activo al hacer scroll --- */
+(function(){
+  const links = document.querySelectorAll('.sitenav a');
+  const ids = [...links].map(a => a.getAttribute('href').slice(1));
+  function update(){
+    const mid = window.scrollY + window.innerHeight * 0.35;
+    let active = ids[0];
+    for(const id of ids){
+      const el = document.getElementById(id);
+      if(el && el.getBoundingClientRect().top + window.scrollY <= mid) active = id;
+    }
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+active));
+  }
+  window.addEventListener('scroll', update, {passive:true});
+  update();
 })();
 
 if('serviceWorker' in navigator && location.protocol === 'https:'){
