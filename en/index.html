@@ -1456,18 +1456,22 @@ updateChips();
 
 /* --- nav activo al hacer scroll --- */
 (function(){
-  const links = document.querySelectorAll('.sitenav a');
-  const ids = [...links].map(a => a.getAttribute('href').slice(1));
+  // solo los enlaces de sección (href que empieza por #), nunca el botón de idioma
+  const links = [...document.querySelectorAll('.sitenav a[href^="#"]')];
+  const ids = links.map(a => a.getAttribute('href').slice(1));
   function update(){
-    const mid = window.scrollY + window.innerHeight * 0.35;
+    const mark = window.scrollY + window.innerHeight * 0.3;
     let active = ids[0];
     for(const id of ids){
       const el = document.getElementById(id);
-      if(el && el.getBoundingClientRect().top + window.scrollY <= mid) active = id;
+      if(!el) continue;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      if(top - 80 <= mark) active = id;   // 80px de margen por el nav fijo
     }
     links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+active));
   }
   window.addEventListener('scroll', update, {passive:true});
+  window.addEventListener('resize', update, {passive:true});
   update();
 })();
 
