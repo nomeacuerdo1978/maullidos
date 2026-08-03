@@ -143,11 +143,19 @@ nav.sitenav{
   border-bottom:1px solid var(--line);
   margin:0 -16px 16px;padding:0 16px;
 }
+nav.sitenav{display:flex;align-items:center}
 nav.sitenav ul{
-  display:flex;gap:2px;list-style:none;
+  display:flex;gap:2px;list-style:none;flex:1;
   overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;white-space:nowrap;
   max-width:620px;margin:0 auto;padding:0;
 }
+.lang-btn{
+  flex:none;margin-left:6px;padding:7px 10px;border:1px solid var(--line);
+  border-radius:8px;background:#fff;font-size:.80rem;font-weight:500;
+  font-family:var(--body);color:var(--ink);cursor:pointer;text-decoration:none;
+  white-space:nowrap;transition:border-color .15s,color .15s;
+}
+.lang-btn:hover{border-color:var(--signal);color:var(--signal)}
 nav.sitenav ul::-webkit-scrollbar{display:none}
 nav.sitenav a{
   display:block;padding:10px 10px 9px;font-size:.82rem;font-weight:500;
@@ -300,7 +308,6 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
   <p class="eyebrow">Domestic Bioacoustics</p>
   <h1>Cat Meow Analyzer</h1>
   <p class="lede">Measures pitch, duration and texture of your cat's vocalisation, then draws its melody. Suggests an interpretation — always showing the raw measurements.</p>
-  <p style="margin-top:10px;font-size:.82rem"><a href="../" style="color:var(--signal)">🇪🇸 Versión en español</a></p>
 </header>
 
 <nav class="sitenav" aria-label="Sections">
@@ -312,6 +319,7 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
     <li><a href="#guia">📖 Guide</a></li>
     <li><a href="#faq">❓ FAQ</a></li>
   </ul>
+  <a class="lang-btn" href="../" aria-label="Cambiar a español">🌐 ES</a>
 </nav>
 
 <section class="card" id="analizador">
@@ -1469,4 +1477,3 @@ if('serviceWorker' in navigator && location.protocol === 'https:'){
 </script>
 </body>
 </html>
-
