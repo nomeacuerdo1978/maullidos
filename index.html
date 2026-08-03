@@ -233,6 +233,16 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
 .prose h3{font-family:var(--display);font-size:1rem;font-weight:500;margin:16px 0 4px}
 .prose p{font-size:.94rem;color:#2d3644;margin-bottom:10px}
 .prose strong{font-weight:600;color:var(--ink)}
+.refs{list-style:none;counter-reset:r;margin:14px 0 0}
+.refs li{counter-increment:r;position:relative;padding:0 0 0 30px;margin-bottom:14px;font-size:.86rem;line-height:1.55;color:#2d3644}
+.refs li::before{content:counter(r);position:absolute;left:0;top:1px;font-family:var(--mono);font-size:.72rem;
+  color:var(--muted);border:1px solid var(--line);border-radius:50%;width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center}
+.refs .t{font-weight:600;color:var(--ink)}
+.refs .src{color:var(--muted);font-style:italic}
+.refs a{color:var(--signal);text-decoration:none;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.76rem}
+.refs a:hover{border-color:var(--signal)}
+.refs .why{display:block;margin-top:3px;color:var(--muted);font-size:.83rem}
 .warn{background:#fdf3f3;border-left:3px solid var(--alert);padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin-bottom:12px}
 </style>
 </head>
@@ -340,6 +350,35 @@ select{font-family:var(--body);font-size:.9rem;padding:9px 12px;border:1px solid
 
   <h2>Cómo grabar para obtener un buen análisis</h2>
   <p>Acércate a menos de un metro, graba en una habitación silenciosa y sin televisión de fondo, y captura el maullido completo desde antes de que empiece hasta después de que termine. Deja medio segundo de silencio a cada lado: el análisis lo usa para estimar el ruido de fondo. Evita el ruido de manos rozando el micrófono, que satura las frecuencias graves y contamina las medidas.</p>
+
+  <h2>Referencias científicas</h2>
+  <p>Estas son las fuentes en las que se apoya lo que cuenta esta página, y también las que explican por qué el resultado se presenta como una hipótesis y no como una traducción. Casi todas son de acceso abierto.</p>
+  <ol class="refs">
+    <li><span class="t">Nicastro, N. y Owren, M. J. (2003). Classification of domestic cat (Felis catus) vocalizations by naive and experienced human listeners.</span> <span class="src">Journal of Comparative Psychology, 117(1), 44–52.</span> <a href="https://doi.org/10.1037/0735-7036.117.1.44">doi.org/10.1037/0735-7036.117.1.44</a>
+      <span class="why">El estudio de referencia sobre los límites de la interpretación. Los oyentes acertaron el contexto por encima del azar, pero solo modestamente, y con más aciertos cuando escuchaban secuencias completas en lugar de maullidos sueltos. Quienes convivían con gatos acertaban más.</span></li>
+
+    <li><span class="t">Prato-Previde, E. et al. (2020). What's in a Meow? A Study on Human Classification and Interpretation of Domestic Cat Vocalizations.</span> <span class="src">Animals, 10(12), 2390.</span> <a href="https://doi.org/10.3390/ani10122390">doi.org/10.3390/ani10122390</a>
+      <span class="why">Replica el hallazgo anterior con tres contextos: espera de comida, aislamiento y cepillado. Las tasas de acierto fueron bajas, mejores en el contexto positivo de la comida que en el de aislamiento.</span></li>
+
+    <li><span class="t">Schötz, S., van de Weijer, J. y Eklund, R. (2019). Melody matters: An acoustic study of domestic cat meows in six contexts and four mental states.</span> <span class="src">Actas del taller VIHAR 2019, Londres, 29–34.</span> <a href="https://doi.org/10.7287/peerj.preprints.27926v1">doi.org/10.7287/peerj.preprints.27926v1</a>
+      <span class="why">Del proyecto Meowsic de la Universidad de Lund. Analizaron 780 maullidos de 40 gatos y encontraron que los contextos positivos tienden a contornos de tono ascendentes y los negativos a descendentes. Es la base de que esta página mida la pendiente del contorno.</span></li>
+
+    <li><span class="t">Tavernier, C., Ahmed, S., Houpt, K. A. y Yeon, S. C. (2020). Feline vocal communication.</span> <span class="src">Journal of Veterinary Science, 21(1), e18.</span> <a href="https://doi.org/10.4142/jvs.2020.21.e18">doi.org/10.4142/jvs.2020.21.e18</a>
+      <span class="why">Revisión del repertorio vocal completo del gato doméstico: se han descrito hasta 21 vocalizaciones distintas, y los autores apuntan que probablemente haya más.</span></li>
+
+    <li><span class="t">McComb, K., Taylor, A. M., Wilson, C. y Charlton, B. D. (2009). The cry embedded within the purr.</span> <span class="src">Current Biology, 19(13), R507–R508.</span> <a href="https://doi.org/10.1016/j.cub.2009.05.033">doi.org/10.1016/j.cub.2009.05.033</a>
+      <span class="why">Describe el ronroneo de solicitud: los gatos insertan en él un componente agudo parecido a un llanto infantil, que resulta difícil de ignorar para el oído humano.</span></li>
+
+    <li><span class="t">Sissom, D. E. F., Rice, D. A. y Peters, G. (1991). How cats purr.</span> <span class="src">Journal of Zoology, 223(1), 67–78.</span> <a href="https://doi.org/10.1111/j.1469-7998.1991.tb04749.x">doi.org/10.1111/j.1469-7998.1991.tb04749.x</a>
+      <span class="why">El trabajo clásico sobre el mecanismo y la frecuencia del ronroneo, muy por debajo del rango del maullido. De ahí que el análisis de esta página, que empieza en 180 hercios, no lo detecte.</span></li>
+
+    <li><span class="t">Yeon, S. C. et al. (2011). Differences between vocalization evoked by social stimuli in feral cats and house cats.</span> <span class="src">Behavioural Processes, 87(2), 183–189.</span> <a href="https://doi.org/10.1016/j.beproc.2011.03.003">doi.org/10.1016/j.beproc.2011.03.003</a>
+      <span class="why">Compara gatos domésticos y asilvestrados en contextos afiliativos y de conflicto, con diferencias en duración y frecuencia. Refuerza la idea del maullido como conducta dirigida a las personas.</span></li>
+
+    <li><span class="t">Ntalampiras, S. et al. (2019). Automatic Classification of Cat Vocalizations Emitted in Different Contexts.</span> <span class="src">Animals, 9(8), 543.</span> <a href="https://doi.org/10.3390/ani9080543">doi.org/10.3390/ani9080543</a>
+      <span class="why">El precedente directo de lo que intenta esta página: clasificación automática de maullidos por contexto a partir de sus características acústicas.</span></li>
+  </ol>
+  <p class="note" style="margin-top:18px">Esta web no está afiliada a ninguno de estos grupos de investigación, ni sus resultados avalan el clasificador que se usa aquí. El motor de reglas se inspira en las tendencias descritas en la literatura, pero no reproduce ningún método publicado ni ha sido validado experimentalmente.</p>
 
   <h2>Preguntas frecuentes</h2>
   <h3>¿Se puede saber qué quiere un gato por su maullido?</h3>
