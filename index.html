@@ -1459,39 +1459,43 @@ updateChips();
 /* --- nav activo al hacer scroll --- */
 (function(){
   const links = [...document.querySelectorAll('.sitenav a[href^="#"]')];
-  const map = {};
   const sections = [];
   for(const a of links){
-    const id = a.getAttribute('href').slice(1);
-    const el = document.getElementById(id);
-    if(el){ map[id] = a; sections.push(el); }
+    const el = document.getElementById(a.getAttribute('href').slice(1));
+    if(el) sections.push(el);
   }
   function setActive(id){
     links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+id));
   }
 
-  // marca inmediata al pulsar un enlace del menú
+  // La sección activa es la última cuyo inicio ya pasó por debajo de la barra (~90px).
+  // No depende de la altura de cada sección, así que un <details> plegado no la rompe.
+  function currentId(){
+    const line = 90;
+    let id = sections.length ? sections[0].id : '';
+    for(const el of sections){
+      if(el.getBoundingClientRect().top <= line) id = el.id;
+      else break;
+    }
+    return id;
+  }
+  function update(){ setActive(currentId()); }
+
+  // Al pulsar un enlace: marca ese de inmediato y mantenlo un momento
+  // mientras el scroll suave llega, sin que el observador lo pise.
+  let lockUntil = 0;
   links.forEach(a => a.addEventListener('click', ()=>{
     setActive(a.getAttribute('href').slice(1));
+    lockUntil = Date.now() + 700;
   }));
 
-  // seguimiento automático al hacer scroll con IntersectionObserver
-  let visible = new Map();
-  const obs = new IntersectionObserver((entries)=>{
-    for(const e of entries){
-      if(e.isIntersecting) visible.set(e.target.id, e.intersectionRatio);
-      else visible.delete(e.target.id);
-    }
-    if(visible.size){
-      // la sección visible que aparece antes en el documento manda
-      for(const el of sections){
-        if(visible.has(el.id)){ setActive(el.id); break; }
-      }
-    }
-  }, { rootMargin: '-80px 0px -55% 0px', threshold: [0, 0.1, 0.5, 1] });
-
-  sections.forEach(el => obs.observe(el));
-  setActive(sections.length ? sections[0].id : '');
+  window.addEventListener('scroll', ()=>{
+    if(Date.now() < lockUntil) return;
+    update();
+  }, {passive:true});
+  window.addEventListener('resize', update, {passive:true});
+  document.addEventListener('toggle', update, true); // recalcula si se abre/cierra un <details>
+  update();
 })();
 
 if('serviceWorker' in navigator && location.protocol === 'https:'){
