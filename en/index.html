@@ -1460,23 +1460,40 @@ updateChips();
 
 /* --- nav activo al hacer scroll --- */
 (function(){
-  // solo los enlaces de sección (href que empieza por #), nunca el botón de idioma
   const links = [...document.querySelectorAll('.sitenav a[href^="#"]')];
-  const ids = links.map(a => a.getAttribute('href').slice(1));
-  function update(){
-    const mark = window.scrollY + window.innerHeight * 0.3;
-    let active = ids[0];
-    for(const id of ids){
-      const el = document.getElementById(id);
-      if(!el) continue;
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      if(top - 80 <= mark) active = id;   // 80px de margen por el nav fijo
-    }
-    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+active));
+  const map = {};
+  const sections = [];
+  for(const a of links){
+    const id = a.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if(el){ map[id] = a; sections.push(el); }
   }
-  window.addEventListener('scroll', update, {passive:true});
-  window.addEventListener('resize', update, {passive:true});
-  update();
+  function setActive(id){
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+id));
+  }
+
+  // marca inmediata al pulsar un enlace del menú
+  links.forEach(a => a.addEventListener('click', ()=>{
+    setActive(a.getAttribute('href').slice(1));
+  }));
+
+  // seguimiento automático al hacer scroll con IntersectionObserver
+  let visible = new Map();
+  const obs = new IntersectionObserver((entries)=>{
+    for(const e of entries){
+      if(e.isIntersecting) visible.set(e.target.id, e.intersectionRatio);
+      else visible.delete(e.target.id);
+    }
+    if(visible.size){
+      // la sección visible que aparece antes en el documento manda
+      for(const el of sections){
+        if(visible.has(el.id)){ setActive(el.id); break; }
+      }
+    }
+  }, { rootMargin: '-80px 0px -55% 0px', threshold: [0, 0.1, 0.5, 1] });
+
+  sections.forEach(el => obs.observe(el));
+  setActive(sections.length ? sections[0].id : '');
 })();
 
 if('serviceWorker' in navigator && location.protocol === 'https:'){
