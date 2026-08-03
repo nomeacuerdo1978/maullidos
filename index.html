@@ -105,6 +105,9 @@
 }
 </script>
 
+<!-- Umami Analytics: sin cookies, sin datos personales, RGPD sin banner -->
+<script defer src="https://cloud.umami.is/script.js" data-website-id="3c65c44e-8b13-4b44-9275-a295e5cc2eae"></script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -175,9 +178,10 @@ h1{font-family:var(--display);font-size:1.9rem;line-height:1.1;letter-spacing:-.
 .btn-go:not(:disabled){box-shadow:0 0 0 3px rgba(139,47,168,.20), 0 2px 8px rgba(139,47,168,.25)}
 /* inactivo: conserva el tono, pero apagado */
 .controls.main .btn:disabled{opacity:1;box-shadow:none}
-.btn-rec:disabled{background:#c2d8d6;color:#6f8d8a;border-color:transparent}
-.btn-stop:disabled{background:#fff;color:#d9a3a8;border-color:#ecc9cc}
-.btn-go:disabled{background:#dccae4;color:#8b7194;border-color:transparent}
+/* inactivos: color reconocible pero claramente apagado */
+.btn-rec:disabled{background:#a8d4cf;color:#3d7872;border-color:transparent}
+.btn-stop:disabled{background:#f5d0d3;color:#b05460;border-color:#e8b4b9}
+.btn-go:disabled{background:#cdb4e6;color:#6b3f94;border-color:transparent}
 .btn .dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
 @media(max-width:430px){
   .controls.main{grid-template-columns:1fr 1fr}
